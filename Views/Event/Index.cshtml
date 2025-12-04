@@ -1,0 +1,81 @@
+﻿@model IEnumerable<UniversalReservationMVC.Models.Event>
+@{
+    ViewData["Title"] = "Wydarzenia";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Wydarzenia</h1>
+        @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+        {
+            <a href="@Url.Action("Create", "Event")" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle"></i> Dodaj nowe
+            </a>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <p>Brak dostępnych wydarzeń.</p>
+            @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+            {
+                <a href="@Url.Action("Create", "Event")" class="btn btn-primary">Utwórz pierwsze wydarzenie</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Title</h5>
+                            <p class="card-text text-muted">@item.Description</p>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><small class="text-muted">Zasób:</small></p>
+                                    <p class="mb-2"><strong>@item.Resource?.Name</strong></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><small class="text-muted">Typ:</small></p>
+                                    <p class="mb-2"><span class="badge bg-info">@item.Resource?.ResourceType</span></p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><small class="text-muted">Początek:</small></p>
+                                    <p><small>@item.StartTime.ToString("dd.MM.yyyy HH:mm")</small></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><small class="text-muted">Koniec:</small></p>
+                                    <p><small>@item.EndTime.ToString("dd.MM.yyyy HH:mm")</small></p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="@Url.Action("Details", "Event", new { id = item.Id })" class="btn btn-sm btn-primary flex-grow-1">
+                                    Szczegóły
+                                </a>
+                                @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                                {
+                                    <a href="@Url.Action("Edit", "Event", new { id = item.Id })" class="btn btn-sm btn-warning">
+                                        Edytuj
+                                    </a>
+                                    <form method="post" action="@Url.Action("Delete", "Event", new { id = item.Id })" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Na pewno chcesz usunąć to wydarzenie?')">Usuń</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,92 @@
+﻿@{
+    ViewData["Title"] = "Potwierdzenie rezerwacji";
+    var email = ViewBag.Email as string;
+    var reservationId = ViewBag.ReservationId as int?;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Rezerwacja potwierdzona!
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <p class="lead mb-4">Twoja rezerwacja jako gość została pomyślnie utworzona.</p>
+
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0">
+                            <strong>Potwierdzenie rezerwacji</strong> zostanie wysłane na adres:
+                        </p>
+                        <p class="mb-0 mt-2">
+                            <code>@email</code>
+                        </p>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Szczegóły rezerwacji</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p><strong>ID rezerwacji:</strong></p>
+                                    <p class="text-muted">#@reservationId</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong></p>
+                                    <p><span class="badge bg-warning">Oczekuje na potwierdzenie</span></p>
+                                </div>
+                            </div>
+                            <p class="mb-0 small text-muted">
+                                Rezerwacja będzie aktywna po potwierdzeniu przez administratora zasobu.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Co dalej?</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li>Sprawdź swoją skrzynkę e-mail pod adresem <strong>@email</strong></li>
+                                <li>Przejdź na link z potwierdzenia rezerwacji</li>
+                                <li>Twoja rezerwacja zostanie aktywowana</li>
+                                <li>Możesz zarządzać rezerwacją w panelu użytkownika</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <p class="mb-0">
+                            <strong>Uwaga:</strong> Jeśli nie otrzymałeś e-maila w ciągu paru minut, 
+                            sprawdź folder SPAM lub 
+                            <a href="@Url.Action("Index", "Home")">wróć do strony głównej</a>.
+                        </p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg">
+                            Wróć do strony głównej
+                        </a>
+                        <a href="@Url.Action("Index", "Resource")" class="btn btn-outline-primary">
+                            Przeglądaj inne zasoby
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p class="text-center text-muted small">
+                    Jeśli posiadasz konto, 
+                    <a href="@Url.Action("Login", "Account")">zaloguj się</a> 
+                    aby uzyskać dostęp do pełnych funkcji.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

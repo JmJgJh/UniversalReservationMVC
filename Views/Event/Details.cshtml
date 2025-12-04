@@ -1,0 +1,23 @@
+@model UniversalReservationMVC.Models.Event
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<h1>@Model.Title</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <p><strong>Zasób:</strong> @Model.Resource?.Name</p>
+        <p><strong>Początek:</strong> @Model.StartTime.ToString("yyyy-MM-dd HH:mm")</p>
+        <p><strong>Koniec:</strong> @Model.EndTime.ToString("yyyy-MM-dd HH:mm")</p>
+        <p><strong>Opis:</strong> @Model.Description</p>
+    </div>
+</div>
+
+<div class="mt-3">
+    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+    {
+        <a href="@Url.Action("Edit", "Event", new { id = Model.Id })" class="btn btn-warning">Edytuj</a>
+    }
+    <a href="@Url.Action("Index", "Event")" class="btn btn-secondary">Wróć do listy</a>
+</div>

@@ -1,0 +1,32 @@
+@model IEnumerable<UniversalReservationMVC.Models.Resource>
+@{
+    ViewData["Title"] = "Strona główna";
+}
+<div class="jumbotron bg-light p-5 rounded-lg">
+    <h1>Witaj w Universal Reservation System</h1>
+    <p class="lead">Rezerwuj zasoby online - restauracje, kina, biura, sale konferencji i teatry!</p>
+</div>
+
+<h2 class="mt-5">Dostępne zasoby</h2>
+<div class="row">
+    @foreach (var r in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@r.Name</h5>
+                    <p class="card-text">
+                        <strong>Typ:</strong> @r.ResourceType<br />
+                        <strong>Lokalizacja:</strong> @r.Location
+                    </p>
+                    <a class="btn btn-primary" href="@Url.Action("Details", "Resource", new { id = r.Id })">Szczegóły</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="mt-5">
+    <a href="@Url.Action("Index", "Resource")" class="btn btn-outline-primary me-2">Pełna lista zasobów</a>
+    <a href="@Url.Action("Index", "Event")" class="btn btn-outline-info">Wszystkie wydarzenia</a>
+</div>

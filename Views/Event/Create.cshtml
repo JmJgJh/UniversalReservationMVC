@@ -1,0 +1,49 @@
+@model UniversalReservationMVC.Models.Event
+@{
+    ViewData["Title"] = "Utwórz wydarzenie";
+}
+
+<h2>Utwórz nowe wydarzenie</h2>
+
+<form method="post" class="mt-4">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label">Tytuł</label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ResourceId" class="form-label">Zasób</label>
+        <select asp-for="ResourceId" class="form-control">
+            <option value="">-- Wybierz zasób --</option>
+            @foreach (var res in ViewBag.Resources)
+            {
+                <option value="@res.Id">@res.Name</option>
+            }
+        </select>
+        <span asp-validation-for="ResourceId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StartTime" class="form-label">Początek</label>
+        <input asp-for="StartTime" type="datetime-local" class="form-control" />
+        <span asp-validation-for="StartTime" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="EndTime" class="form-label">Koniec</label>
+        <input asp-for="EndTime" type="datetime-local" class="form-control" />
+        <span asp-validation-for="EndTime" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Opis</label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Utwórz</button>
+    <a href="@Url.Action("Index", "Event")" class="btn btn-secondary">Anuluj</a>
+</form>

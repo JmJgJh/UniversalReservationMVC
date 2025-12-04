@@ -1,0 +1,22 @@
+@model IEnumerable<UniversalReservationMVC.Models.Seat>
+@{
+    ViewData["Title"] = "Mapa miejsc";
+    var resourceId = ViewBag.ResourceId as int? ?? 0;
+}
+<h2>Mapa miejsc (siatka)</h2>
+<p>Wybierz miejsce, aby zarezerwować.</p>
+<table class="table table-bordered">
+    <thead>
+        <tr><th>X</th><th>Y</th><th>Akcja</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.X</td>
+                <td>@s.Y</td>
+                <td><a class="btn btn-sm btn-success" href="/Reservation/Create?resourceId=@resourceId&seatId=@s.Id">Rezerwuj</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
