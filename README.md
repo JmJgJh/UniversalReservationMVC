@@ -41,22 +41,24 @@ Domyślny administrator (jeśli nie istnieje) jest tworzony według ustawień w 
 - [x] Migracje EF Core w `/Migrations`
 - [x] Seeding ról domyślnych w `Program.cs`
 
-## 📋 Do zrobienia (Todo)
-
-- [ ] Wdrożenie płatności dla Ticket Purchase Flow (integracja z PayPal/Stripe)
-- [ ] Rozszerzone widoki zarządzania zasobami dla Admin/Owner (edycja, usuwanie, statystyki)
+## 📋 Do zrobienia (Todo
 - [ ] Graficzna reprezentacja mapy miejsc (SVG/Canvas zamiast tabeli)
-- [ ] System powiadomień e-mail dla rezerwacji i zmian
-- [ ] Export rezerwacji do PDF
-- [ ] API REST endpoints dla mobilnych/zewnętrznych klientów
-- [ ] Unit testy (xUnit framework)
-- [ ] Integracja testów e2e (Selenium/Playwright)
 - [ ] Dashboard analytics dla Admin (statystyki rezerwacji, przychody)
+- [ ] Rozszerzone widoki zarządzania zasobami dla Admin/Owner (edycja, usuwanie, statystyki)
+- [ ] System powiadomień e-mail dla rezerwacji i zmian
 - [ ] Obsługa anulowania rezerwacji z refundacją
-- [ ] System rabatów/kodów promocyjnych
-- [ ] Wielojęzyczność (wsparcie i18n)
 - [ ] Automatyczne archiwizowanie starych rezerwacji
-- [ ] Migracja na MS SQL Server (jeśli wymagane)
-- [ ] Containeryzacja (Docker)
-- [ ] CI/CD pipeline (GitHub Actions)
 
+
+- [ ] API REST endpoints dla mobilnych/zewnętrznych klientów
+- [ ] Export rezerwacji do PDF
+- [ ] Wielojęzyczność (wsparcie i18n)
+      
+     
+- [ ] Migracja na MS SQL Server (jeśli wymagane)
+- [ ] Wdrożenie płatności dla Ticket Purchase Flow (integracja z PayPal/Stripe)
+- [ ] Unit testy (xUnit framework)
+- [ ]  Containeryzacja (Docker)
+- [ ] CI/CD pipeline (GitHub Actions)
+- [ ] System rabatów/kodów promocyjnych
+- [ ] Integracja testów e2e (Selenium/Playwright)
