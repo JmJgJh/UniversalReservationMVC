@@ -30,7 +30,7 @@ namespace UniversalReservationMVC.Controllers
             if (resource == null) return NotFound();
             
             // Pobierz aktualne wydarzenie dla zasobu
-            var currentEvent = await _eventService.GetCurrentEvent(id);
+            var currentEvent = await _eventService.GetCurrentEventAsync(id);
             ViewBag.CurrentEvent = currentEvent;
             
             return View(resource);

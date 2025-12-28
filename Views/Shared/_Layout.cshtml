@@ -25,6 +25,10 @@
                     {
                         <li class="nav-item"><a class="nav-link" href="@Url.Action("MyReservations", "Reservation")">Moje rezerwacje</a></li>
                         <li class="nav-item"><a class="nav-link" href="@Url.Action("MyTickets", "Ticket")">Moje bilety</a></li>
+                        @if (User.IsInRole("Owner"))
+                        {
+                            <li class="nav-item"><a class="nav-link" href="@Url.Action("Dashboard", "Company")">📊 Panel firmy</a></li>
+                        }
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 @User.Identity?.Name

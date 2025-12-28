@@ -14,6 +14,24 @@
     </div>
 </div>
 
+<div class="mt-4">
+    <h5>Akcje</h5>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.ResourceId })" class="btn btn-primary">Wybierz miejsce</a>
+        <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-success">Zarezerwuj (logowanie)</a>
+        <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-success">Rezerwuj jako gość</a>
+        <a href="@Url.Action("GetSeatMap", "Seat", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-info">Mapa miejsc</a>
+    </div>
+    @if (ViewBag.UserReservationId != null)
+    {
+        <div class="mt-2">
+            <a href="@Url.Action("Buy", "Ticket", new { reservationId = ViewBag.UserReservationId })" class="btn btn-outline-primary">
+                Kup bilet
+            </a>
+        </div>
+    }
+</div>
+
 <div class="mt-3">
     @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
     {

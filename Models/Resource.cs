@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UniversalReservationMVC.Models
 {
@@ -6,17 +7,42 @@ namespace UniversalReservationMVC.Models
     public class Resource
     {
         public int Id { get; set; }
+        
+        [Required(ErrorMessage = "Nazwa zasobu jest wymagana")]
+        [StringLength(200, ErrorMessage = "Nazwa nie może przekraczać 200 znaków")]
+        public string Name { get; set; } = string.Empty;
+        
         [Required]
-        public string Name { get; set; }
         public ResourceType ResourceType { get; set; }
+        
+        [StringLength(500, ErrorMessage = "Lokalizacja nie może przekraczać 500 znaków")]
         public string? Location { get; set; }
+        
+        [StringLength(2000, ErrorMessage = "Opis nie może przekraczać 2000 znaków")]
         public string? Description { get; set; }
 
         // Optional layout metadata (seat map width/height)
+        [Range(1, 100, ErrorMessage = "Szerokość musi być między 1 a 100")]
         public int? SeatMapWidth { get; set; }
+        
+        [Range(1, 100, ErrorMessage = "Wysokość musi być między 1 a 100")]
         public int? SeatMapHeight { get; set; }
 
+        // Total capacity of the resource (if not seat-based)
+        [Range(1, 10000, ErrorMessage = "Pojemność musi być między 1 a 10000")]
+        public int? Capacity { get; set; }
+
+        // Company association (resource belongs to a company owner)
+        public int? CompanyId { get; set; }
+
+        [ForeignKey("CompanyId")]
+        public virtual Company? Company { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
         // Navigation property
-        public ICollection<Seat>? Seats { get; set; }
+        public ICollection<Seat> Seats { get; set; } = new List<Seat>();
     }
 }

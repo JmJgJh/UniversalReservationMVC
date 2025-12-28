@@ -4,7 +4,12 @@ namespace UniversalReservationMVC.Services
 {
     public interface IEventService
     {
-        Task<Event> CreateEvent(Event ev);
-        Task<Event?> GetCurrentEvent(int resourceId, DateTime? at = null);
+        Task<Event> CreateEventAsync(Event ev);
+        Task<Event?> GetEventByIdAsync(int id);
+        Task<Event?> GetCurrentEventAsync(int resourceId, DateTime? at = null);
+        Task<IEnumerable<Event>> GetAllEventsAsync();
+        Task<IEnumerable<Event>> GetUpcomingEventsAsync(int? resourceId = null);
+        Task UpdateEventAsync(Event ev);
+        Task DeleteEventAsync(int id);
     }
 }

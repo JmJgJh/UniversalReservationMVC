@@ -5,38 +5,133 @@
 
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-7">
             <h2>Utwórz konto</h2>
-            <form method="post">
+            <p class="text-muted">Wybierz typ konta, który chcesz stworzyć</p>
+            <hr />
+
+            <form method="post" id="registerForm">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <!-- Account Type Selection -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Typ konta</strong></label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="AccountType" id="typeUser" value="user" checked />
+                        <label class="btn btn-outline-primary" for="typeUser">
+                            👤 Zwykły użytkownik
+                        </label>
+
+                        <input type="radio" class="btn-check" name="AccountType" id="typeOwner" value="owner" />
+                        <label class="btn btn-outline-primary" for="typeOwner">
+                            🏢 Właściciel firmy
+                        </label>
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- Personal info (always visible) -->
                 <div class="mb-3">
-                    <label asp-for="FirstName" class="form-label">Imie</label>
+                    <label asp-for="FirstName" class="form-label">Imię</label>
                     <input asp-for="FirstName" class="form-control" />
                     <span asp-validation-for="FirstName" class="text-danger"></span>
                 </div>
+
                 <div class="mb-3">
                     <label asp-for="LastName" class="form-label">Nazwisko</label>
                     <input asp-for="LastName" class="form-control" />
                     <span asp-validation-for="LastName" class="text-danger"></span>
                 </div>
+
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label">E-mail</label>
                     <input asp-for="Email" class="form-control" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
+
                 <div class="mb-3">
-                    <label asp-for="Password" class="form-label">Haslo</label>
+                    <label asp-for="Password" class="form-label">Hasło</label>
                     <input asp-for="Password" class="form-control" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
+
                 <div class="mb-3">
-                    <label asp-for="ConfirmPassword" class="form-label">Potwierdź haslo</label>
+                    <label asp-for="ConfirmPassword" class="form-label">Potwierdź hasło</label>
                     <input asp-for="ConfirmPassword" class="form-control" />
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
-                <button type="submit" class="btn btn-primary">Zarejestruj sie</button>
+
+                <!-- Company info (visible only for owners) -->
+                <div id="companySection" class="company-fields d-none">
+                    <hr />
+                    <h5>Dane firmy</h5>
+
+                    <div class="mb-3">
+                        <label asp-for="CompanyName" class="form-label">Nazwa firmy <span class="text-danger">*</span></label>
+                        <input asp-for="CompanyName" class="form-control" placeholder="np. ABC Sp. z o.o." />
+                        <span asp-validation-for="CompanyName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CompanyAddress" class="form-label">Adres</label>
+                        <input asp-for="CompanyAddress" class="form-control" placeholder="ul. Przykładowa 1, 00-001 Warszawa" />
+                        <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="CompanyPhone" class="form-label">Telefon</label>
+                                <input asp-for="CompanyPhone" class="form-control" placeholder="+48 12 345 67 89" />
+                                <span asp-validation-for="CompanyPhone" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="CompanyEmail" class="form-label">Email firmy</label>
+                                <input asp-for="CompanyEmail" class="form-control" type="email" placeholder="kontakt@firma.pl" />
+                                <span asp-validation-for="CompanyEmail" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CompanyDescription" class="form-label">Opis firmy</label>
+                        <textarea asp-for="CompanyDescription" class="form-control" rows="2" placeholder="Opisz swoją firmę"></textarea>
+                        <span asp-validation-for="CompanyDescription" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Zarejestruj się</button>
             </form>
-            <p class="mt-3">Masz juz konto? <a href="@Url.Action("Login", "Account")">Zaloguj sie</a></p>
+
+            <p class="mt-3 text-center">Masz już konto? <a href="@Url.Action("Login", "Account")">Zaloguj się</a></p>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const typeUserRadio = document.getElementById('typeUser');
+            const typeOwnerRadio = document.getElementById('typeOwner');
+            const companySection = document.getElementById('companySection');
+
+            function toggleCompanySection() {
+                if (typeOwnerRadio.checked) {
+                    companySection.classList.remove('d-none');
+                } else {
+                    companySection.classList.add('d-none');
+                }
+            }
+
+            typeUserRadio.addEventListener('change', toggleCompanySection);
+            typeOwnerRadio.addEventListener('change', toggleCompanySection);
+
+            // Initial toggle
+            toggleCompanySection();
+        });
+    </script>
+}

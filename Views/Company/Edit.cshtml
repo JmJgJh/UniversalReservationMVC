@@ -1,0 +1,76 @@
+@model UniversalReservationMVC.Models.Company
+
+@{
+    ViewData["Title"] = "Edytuj dane firmy";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>Edytuj dane firmy</h1>
+            <hr />
+
+            <form method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="OwnerId" />
+                <input type="hidden" asp-for="CreatedAt" />
+
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="form-label">Nazwa firmy</label>
+                    <input asp-for="Name" class="form-control" placeholder="Nazwa firmy" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="form-label">Opis</label>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Opisz swoją firmę"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Address" class="form-label">Adres</label>
+                    <input asp-for="Address" class="form-control" placeholder="ul. Adres 1, 00-000 Miasto" />
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">Telefon</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="+48 12 345 67 89" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="contact@company.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Website" class="form-label">Strona www</label>
+                    <input asp-for="Website" class="form-control" placeholder="https://example.com" />
+                    <span asp-validation-for="Website" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="LogoUrl" class="form-label">URL logo</label>
+                    <input asp-for="LogoUrl" class="form-control" placeholder="https://example.com/logo.png" />
+                    <span asp-validation-for="LogoUrl" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+                    <a href="@Url.Action("Dashboard", "Company")" class="btn btn-secondary">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

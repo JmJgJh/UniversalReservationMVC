@@ -15,4 +15,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="UniversalReservationMVC.Tests/**" />
+    <Content Remove="UniversalReservationMVC.Tests/**" />
+    <EmbeddedResource Remove="UniversalReservationMVC.Tests/**" />
+    <None Remove="UniversalReservationMVC.Tests/**" />
+  </ItemGroup>
+
 </Project>

@@ -4,8 +4,9 @@ namespace UniversalReservationMVC.Services
 {
     public interface ITicketService
     {
-        Task<Ticket> BuyTicket(int reservationId, decimal price, string? purchaserId = null);
-        Task CancelTicket(int ticketId);
-        Task<IEnumerable<Ticket>> GetTicketsForUser(string userId);
+        Task<Ticket> BuyTicketAsync(int reservationId, decimal price, string? purchaserId = null);
+        Task CancelTicketAsync(int ticketId);
+        Task<IEnumerable<Ticket>> GetTicketsForUserAsync(string userId);
+        Task<Ticket?> GetTicketByIdAsync(int id);
     }
 }

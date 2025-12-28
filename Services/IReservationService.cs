@@ -4,12 +4,14 @@ namespace UniversalReservationMVC.Services
 {
     public interface IReservationService
     {
-        Task<Reservation> CreateReservation(Reservation reservation);
-        Task<Reservation> CreateGuestReservation(Reservation reservation);
-        Task CancelReservation(int reservationId);
-        Task<IEnumerable<Reservation>> GetReservationsForUser(string userId);
-        Task<IEnumerable<Reservation>> GetReservationsForResource(int resourceId, DateTime? from = null, DateTime? to = null);
+        Task<Reservation> CreateReservationAsync(Reservation reservation);
+        Task<Reservation> CreateGuestReservationAsync(Reservation reservation);
+        Task<Reservation> UpdateReservationAsync(Reservation reservation);
+        Task CancelReservationAsync(int reservationId);
+        Task<Reservation?> GetReservationByIdAsync(int id);
+        Task<IEnumerable<Reservation>> GetReservationsForUserAsync(string userId);
+        Task<IEnumerable<Reservation>> GetReservationsForResourceAsync(int resourceId, DateTime? from = null, DateTime? to = null);
         Task<IEnumerable<Seat>> GetSeatsAsync(int resourceId);
-        Task<bool> IsSeatAvailableAsync(int resourceId, int seatId, DateTime start, DateTime end);
+        Task<bool> IsSeatAvailableAsync(int resourceId, int seatId, DateTime start, DateTime end, int? excludeReservationId = null);
     }
 }

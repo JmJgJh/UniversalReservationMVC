@@ -3,9 +3,6 @@
     ViewData["Title"] = "Mapa miejsc";
     var resourceId = ViewBag.ResourceId as int? ?? 0;
     var resourceName = ViewBag.ResourceName as string ?? "Zasób";
-    
-    // Group seats by row
-    var seatsByRow = Model.GroupBy(s => s.Row).OrderBy(g => g.Key).ToList();
 }
 
 <style>
@@ -105,7 +102,18 @@
 
 <div class="container">
     <h1>Mapa miejsc - @resourceName</h1>
-    <p class="text-muted">Kliknij na zielone miejsce, aby dokonać rezerwacji.</p>
+    <p class="text-muted">Wybierz przedział czasu, kliknij miejsce (zielone), aby je zarezerwować.</p>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Początek</label>
+            <input type="datetime-local" class="form-control" id="startTime" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Koniec</label>
+            <input type="datetime-local" class="form-control" id="endTime" />
+        </div>
+    </div>
 
     <div class="legend">
         <div class="legend-item">
@@ -114,63 +122,167 @@
         </div>
         <div class="legend-item">
             <span class="legend-box unavailable"></span>
-            <strong>Zajęte</strong>
+            <strong>Zajęte / Zablokowane</strong>
         </div>
     </div>
 
     <div class="seat-map-container">
-        @if (Model.Any())
-        {
-            @foreach (var rowGroup in seatsByRow)
-            {
-                <div style="margin-bottom: 20px;">
-                    <p><strong>Rząd @rowGroup.Key</strong></p>
-                    <div class="seat-grid" style="display: grid; grid-template-columns: repeat(@rowGroup.Count(), minmax(60px, 1fr)); gap: 10px;">
-                        @foreach (var seat in rowGroup.OrderBy(s => s.Column))
-                        {
-                            if (seat.IsAvailable)
-                            {
-                                @if (User?.Identity?.IsAuthenticated == true)
-                                {
-                                    <a href="@Url.Action("Create", "Reservation", new { resourceId = resourceId, seatId = seat.Id })" 
-                                       class="seat available" 
-                                       title="Dostępne - Kliknij aby rezerwować">
-                                        <div class="seat-label">
-                                            <div>@seat.Label</div>
-                                        </div>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = resourceId, seatId = seat.Id })" 
-                                       class="seat available" 
-                                       title="Dostępne - Kliknij aby rezerwować jako gość">
-                                        <div class="seat-label">
-                                            <div>@seat.Label</div>
-                                        </div>
-                                    </a>
-                                }
-                            }
-                            else
-                            {
-                                <div class="seat unavailable" title="To miejsce jest zajęte">
-                                    <div class="seat-label">
-                                        <div>@seat.Label</div>
-                                    </div>
-                                </div>
-                            }
-                        }
-                    </div>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="alert alert-info">Brak miejsc dostępnych dla tego zasobu.</div>
-        }
+        <svg id="seatSvg" width="800" height="600" style="border: 2px solid #dee2e6; background: #fff; border-radius: 8px;"></svg>
     </div>
 
-    <div class="mt-3">
+    <div class="mt-3 d-flex gap-2">
         <a href="@Url.Action("Details", "Resource", new { id = resourceId })" class="btn btn-secondary">Wróć do zasobu</a>
+        <button id="refreshBtn" class="btn btn-outline-primary">Odśwież dostępność</button>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js" integrity="sha512-jZpQe6w3mJm2jWQioCROuUuZzLq5cM0+qUeF+oCkCkYz2xLh1gYgC6Bf6qW8R4fQv6YfEwG6kH3D1V5pB7wSMA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    const resourceId = @resourceId;
+    const seatSvg = document.getElementById('seatSvg');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const startInput = document.getElementById('startTime');
+    const endInput = document.getElementById('endTime');
+    let seats = [];
+    const eventId = @(ViewBag.EventId != null ? ViewBag.EventId : "null");
+    const eventStartIso = '@(ViewBag.EventStart is DateTime ? ((DateTime)ViewBag.EventStart).ToString("o") : "")';
+    const eventEndIso = '@(ViewBag.EventEnd is DateTime ? ((DateTime)ViewBag.EventEnd).ToString("o") : "")';
+
+    function toIsoLocal(input) {
+        const v = input.value;
+        if (!v) return null;
+        // Assume local time, convert to ISO with 'Z' for simplicity
+        return new Date(v).toISOString();
+    }
+
+    function seatRect(seat, occupied) {
+        const size = 40;
+        const padding = 20;
+        const x = padding + (seat.x - 1) * (size + 10);
+        const y = padding + (seat.y - 1) * (size + 10);
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x);
+        rect.setAttribute('y', y);
+        rect.setAttribute('width', size);
+        rect.setAttribute('height', size);
+        rect.setAttribute('rx', 6);
+        rect.setAttribute('ry', 6);
+        rect.setAttribute('stroke', '#dee2e6');
+        rect.setAttribute('stroke-width', 2);
+        rect.setAttribute('fill', occupied ? '#dc3545' : '#28a745');
+        rect.style.cursor = occupied ? 'not-allowed' : 'pointer';
+
+        rect.addEventListener('click', async () => {
+            if (occupied) return;
+            const start = toIsoLocal(startInput);
+            const end = toIsoLocal(endInput);
+            if (!start || !end) {
+                alert('Podaj poprawny przedział czasu.');
+                return;
+            }
+            // Try a soft-hold
+            const url = `/Seat/Hold?resourceId=${resourceId}&seatId=${seat.id}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+            const res = await fetch(url, { method: 'POST' });
+            if (!res.ok) {
+                const msg = await res.text();
+                alert('Nie udało się zablokować miejsca: ' + msg);
+                return;
+            }
+            // Redirect to reservation flow (authenticated or guest)
+            const isAuthenticated = @((User?.Identity?.IsAuthenticated ?? false).ToString().ToLower());
+            const eventParam = eventId !== null ? `&eventId=${eventId}` : '';
+            if (isAuthenticated) {
+                window.location.href = `@Url.Action("Create", "Reservation")?resourceId=${resourceId}&seatId=${seat.id}${eventParam}`;
+            } else {
+                window.location.href = `@Url.Action("GuestCreate", "Reservation")?resourceId=${resourceId}&seatId=${seat.id}${eventParam}`;
+            }
+        });
+
+        // Label
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x + size / 2);
+        text.setAttribute('y', y + size / 2 + 5);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', '12');
+        text.setAttribute('fill', '#fff');
+        text.textContent = seat.label || `${seat.row}${seat.column ?? ''}`;
+
+        return { rect, text };
+    }
+
+    async function loadSeats() {
+        const res = await fetch(`/Seat/MapJson?resourceId=${resourceId}`);
+        seats = await res.json();
+        render();
+        await refreshAvailability();
+    }
+
+    async function refreshAvailability() {
+        const start = toIsoLocal(startInput);
+        const end = toIsoLocal(endInput);
+        if (!start || !end) return;
+        const res = await fetch(`/Seat/Availability?resourceId=${resourceId}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+        const data = await res.json();
+        const occupiedSet = new Set(data.occupiedSeatIds || []);
+        render(occupiedSet);
+    }
+
+    function render(occupiedSet = new Set()) {
+        while (seatSvg.firstChild) seatSvg.removeChild(seatSvg.firstChild);
+        let maxX = 0, maxY = 0;
+        seats.forEach(s => { maxX = Math.max(maxX, s.x); maxY = Math.max(maxY, s.y); });
+        const width = 40 * maxX + 20 * (maxX + 1);
+        const height = 40 * maxY + 20 * (maxY + 1);
+        seatSvg.setAttribute('width', Math.max(800, width));
+        seatSvg.setAttribute('height', Math.max(600, height));
+        seats.forEach(seat => {
+            const occupied = occupiedSet.has(seat.id) ? true : false;
+            const { rect, text } = seatRect(seat, occupied);
+            seatSvg.appendChild(rect);
+            seatSvg.appendChild(text);
+        });
+    }
+
+    refreshBtn.addEventListener('click', refreshAvailability);
+
+    const toLocalInputValue = (d) => {
+        const off = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - off * 60000);
+        return local.toISOString().slice(0,16);
+    };
+    if (eventStartIso && eventEndIso) {
+        startInput.value = toLocalInputValue(new Date(eventStartIso));
+        endInput.value = toLocalInputValue(new Date(eventEndIso));
+    } else {
+        // Default time window: now+1h to now+2h
+        const now = new Date();
+        startInput.value = toLocalInputValue(new Date(now.getTime() + 60*60*1000));
+        endInput.value = toLocalInputValue(new Date(now.getTime() + 2*60*60*1000));
+    }
+    startInput.addEventListener('change', refreshAvailability);
+    endInput.addEventListener('change', refreshAvailability);
+
+    // SignalR subscription
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/seat')
+        .withAutomaticReconnect()
+        .build();
+    connection.on('SeatHoldPlaced', (payload) => {
+        if (payload.resourceId === resourceId) refreshAvailability();
+    });
+    connection.on('SeatHoldReleased', (payload) => {
+        if (payload.resourceId === resourceId) refreshAvailability();
+    });
+    connection.on('SeatReserved', (payload) => {
+        if (payload.resourceId === resourceId) refreshAvailability();
+    });
+    connection.on('SeatReservationCancelled', (payload) => {
+        if (payload.resourceId === resourceId) refreshAvailability();
+    });
+    connection.start().then(() => {
+        // Join resource group
+        connection.invoke('JoinResource', resourceId.toString());
+    }).catch(err => console.error(err));
+
+    loadSeats();
+</script>

@@ -28,6 +28,32 @@ namespace UniversalReservationMVC.Controllers
         {
             var ev = await _db.Events.Include(e => e.Resource).FirstOrDefaultAsync(e => e.Id == id);
             if (ev == null) return NotFound();
+            
+            // Detect current user's reservation linked to this event or overlapping time window
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var userReservation = await _db.Reservations
+                    .Where(r => r.UserId == userId
+                                && r.ResourceId == ev.ResourceId
+                                && r.Status == ReservationStatus.Confirmed
+                                && (
+                                    (r.EventId.HasValue && r.EventId == ev.Id) ||
+                                    (r.StartTime < ev.EndTime && r.EndTime > ev.StartTime)
+                                ))
+                    .OrderByDescending(r => r.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+                if (userReservation != null)
+                {
+                    // Show buy button only if no purchased ticket exists for this reservation
+                    bool alreadyPurchased = await _db.Tickets.AnyAsync(t => t.ReservationId == userReservation.Id && t.Status == TicketStatus.Purchased);
+                    if (!alreadyPurchased)
+                    {
+                        ViewBag.UserReservationId = userReservation.Id;
+                    }
+                }
+            }
             return View(ev);
         }
 
@@ -46,7 +72,7 @@ namespace UniversalReservationMVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                var ev = await _eventService.CreateEvent(model);
+                var ev = await _eventService.CreateEventAsync(model);
                 return RedirectToAction(nameof(Index));
             }
             ViewBag.Resources = _db.Resources.ToList();

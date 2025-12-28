@@ -1,0 +1,224 @@
+@model UniversalReservationMVC.Models.Company
+
+@{
+    ViewData["Title"] = "Panel Firmy";
+    
+    // Calculate statistics
+    var totalResources = Model.Resources?.Count ?? 0;
+    var totalSeats = Model.Resources?.Sum(r => r.Seats?.Count ?? 0) ?? 0;
+    var totalReservations = Model.Resources?.Sum(r => 0) ?? 0; // Will be fetched from service
+    var occupancyRate = totalSeats > 0 ? ((totalSeats - 0) * 100 / totalSeats) : 0; // Placeholder
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>@Model.Name</h1>
+            <p class="text-muted">Panel zarządzania firmą i zasobami</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Edit", "Company")" class="btn btn-primary">Edytuj dane firmy</a>
+        </div>
+    </div>
+
+    <!-- Informacje o firmie -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Zasoby</h5>
+                    <p class="display-4 text-primary">@totalResources</p>
+                    <p class="text-muted">pomieszczeń / stanowisk</p>
+                    <a href="@Url.Action("Resources", "Company")" class="btn btn-sm btn-outline-primary">Zarządzaj</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Stanowiska</h5>
+                    <p class="display-4 text-success">@totalSeats</p>
+                    <p class="text-muted">wszystkie miejsca</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Rezerwacje</h5>
+                    <p class="display-4 text-info">@totalReservations</p>
+                    <p class="text-muted">w tym miesiącu</p>
+                    <a href="@Url.Action("Reservations", "Company")" class="btn btn-sm btn-outline-info">Przegląd</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Zajętość</h5>
+                    <p class="display-4 text-warning">@occupancyRate%</p>
+                    <p class="text-muted">średnia zajętość</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informacje o firmie -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dane firmy</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Adres:</strong> @(Model.Address ?? "—")</p>
+                    <p><strong>Telefon:</strong> @(Model.PhoneNumber ?? "—")</p>
+                    <p><strong>Email:</strong> @(Model.Email ?? "—")</p>
+                    <p><strong>Status:</strong>
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">Aktywna</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Nieaktywna</span>
+                        }
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="@Url.Action("Edit", "Company")" class="btn btn-sm btn-outline-primary w-100">Edytuj firmę</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Szybkie akcje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#createResourceModal">
+                                + Dodaj zasób
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Resources", "Company")" class="btn btn-outline-info w-100">
+                                Zarządzaj zasobami
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Reservations", "Company")" class="btn btn-outline-success w-100">
+                                Przeglądaj rezerwacje
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Reports", "Company")" class="btn btn-outline-warning w-100">
+                                Raporty
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ostatnie zasoby -->
+    @if (Model.Resources != null && Model.Resources.Count > 0)
+    {
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Twoje zasoby</h5>
+                            <a href="@Url.Action("Resources", "Company")" class="btn btn-sm btn-outline-primary">Wszystkie zasoby</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nazwa</th>
+                                        <th>Typ</th>
+                                        <th>Lokalizacja</th>
+                                        <th>Stanowiska</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var resource in Model.Resources.Take(5))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@resource.Name</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@resource.ResourceType</span>
+                                            </td>
+                                            <td>@(resource.Location ?? "—")</td>
+                                            <td>
+                                                <span class="badge bg-info">@(resource.Seats?.Count ?? 0)</span>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("EditResource", "Company", new { resourceId = resource.Id })" 
+                                                   class="btn btn-sm btn-outline-primary" title="Edytuj">✎</a>
+                                                <a href="@Url.Action("SeatMapBuilder", "Company", new { resourceId = resource.Id })" 
+                                                   class="btn btn-sm btn-outline-info" title="Edytuj mapę">🗺</a>
+                                                <button class="btn btn-sm btn-outline-danger" title="Usuń">🗑</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal: Dodaj zasób (quick action) -->
+<div class="modal fade" id="createResourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj nowy zasób</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="@Url.Action("CreateResource", "Company")">
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nazwa zasobu <span class="text-danger">*</span></label>
+                        <input type="text" name="Name" class="form-control" placeholder="np. Sala konferencji A" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Typ zasobu <span class="text-danger">*</span></label>
+                        <select name="ResourceType" class="form-select" required>
+                            <option value="">-- Wybierz typ --</option>
+                            <option value="0">Sala konferencji</option>
+                            <option value="1">Stanowisko pracy</option>
+                            <option value="2">Sala szkoleniowa</option>
+                            <option value="3">Inne</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Lokalizacja</label>
+                        <input type="text" name="Location" class="form-control" placeholder="np. Piętro 2" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Utwórz zasób</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

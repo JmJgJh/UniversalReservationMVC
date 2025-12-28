@@ -6,21 +6,21 @@
     <div class="row mb-4">
         <div class="col-md-8">
             <h1>Kalendarz rezerwacji</h1>
-            <p class="text-muted">ZasĂłb: <strong>@ViewBag.ResourceName</strong></p>
+            <p class="text-muted">Zasób: <strong>@ViewBag.ResourceName</strong></p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="@Url.Action("Index", "Resource")" class="btn btn-secondary">PowrĂłt do zasobĂłw</a>
+            <a href="@Url.Action("Index", "Resource")" class="btn btn-secondary">Powrót do zasobów</a>
         </div>
     </div>
 
     <!-- Calendar Navigation -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
-            <div class="row align-items-center">
+            <div class="row align-items-center mb-2">
                 <div class="col-md-4">
                     <a href="@Url.Action("Index", "Calendar", new { resourceId = ViewBag.ResourceId, year = ViewBag.PreviousYear, month = ViewBag.PreviousMonth })" 
                        class="btn btn-sm btn-light">
-                        â† Poprzedni
+                        ← Poprzedni
                     </a>
                 </div>
                 <div class="col-md-4 text-center">
@@ -29,22 +29,44 @@
                 <div class="col-md-4 text-end">
                     <a href="@Url.Action("Index", "Calendar", new { resourceId = ViewBag.ResourceId, year = ViewBag.NextYear, month = ViewBag.NextMonth })" 
                        class="btn btn-sm btn-light">
-                        NastÄ™pny â†’
+                        Następny →
                     </a>
+                </div>
+            </div>
+            <div class="row g-2 align-items-center">
+                <div class="col-md-6 d-flex flex-wrap align-items-center gap-3">
+                    <button id="todayBtn" class="btn btn-outline-light btn-sm">Dzisiaj</button>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="toggleEvents" checked>
+                        <label class="form-check-label text-white" for="toggleEvents">Wydarzenia</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="toggleReservations" checked>
+                        <label class="form-check-label text-white" for="toggleReservations">Rezerwacje</label>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <select id="statusFilter" class="form-select form-select-sm">
+                        <option value="">Wszystkie statusy</option>
+                        <option value="Confirmed">Potwierdzone</option>
+                        <option value="Pending">Oczekujące</option>
+                        <option value="Cancelled">Anulowane</option>
+                    </select>
                 </div>
             </div>
         </div>
 
         <!-- Calendar Grid -->
         <div class="card-body p-3">
+            <div id="calendarAlert" class="alert alert-danger d-none" role="alert"></div>
             <div class="calendar-wrapper">
                 <!-- Day headers -->
                 <div class="calendar-grid">
-                    <div class="day-header">PoniedziaĹ‚ek</div>
+                    <div class="day-header">Poniedziałek</div>
                     <div class="day-header">Wtorek</div>
-                    <div class="day-header">Ĺšroda</div>
+                    <div class="day-header">Środa</div>
                     <div class="day-header">Czwartek</div>
-                    <div class="day-header">PiÄ…tek</div>
+                    <div class="day-header">Piątek</div>
                     <div class="day-header">Sobota</div>
                     <div class="day-header">Niedziela</div>
 
@@ -62,7 +84,7 @@
                         <span class="badge bg-primary me-2">Rezerwacja - Potwierdzona</span>
                     </div>
                     <div class="col-md-6">
-                        <span class="badge bg-warning me-2">Rezerwacja - OczekujÄ…ca</span>
+                        <span class="badge bg-warning me-2">Rezerwacja - Oczekująca</span>
                         <span class="badge bg-danger me-2">Rezerwacja - Anulowana</span>
                     </div>
                 </div>
@@ -79,7 +101,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label class="form-label">Wybierz datÄ™ poczÄ…tkowÄ…:</label>
+                        <label class="form-label">Wybierz datę początkową:</label>
                         <input type="date" id="quickReservationDate" class="form-control" />
                     </div>
                 </div>
@@ -87,7 +109,7 @@
                     <div class="mb-3">
                         <label class="form-label">&nbsp;</label>
                         <a href="#" id="quickReservationBtn" class="btn btn-primary btn-block w-100">
-                            UtwĂłrz rezerwacjÄ™
+                            Utwórz rezerwację
                         </a>
                     </div>
                 </div>
@@ -238,17 +260,30 @@
         setupEventListeners(resourceId);
     });
 
+    const calendarState = {
+        showEvents: true,
+        showReservations: true,
+        statusFilter: ''
+    };
+
+    let lastPayload = null;
+
     function loadCalendarData(resourceId, year, month) {
         fetch(`/Calendar/GetReservations?resourceId=${resourceId}&year=${year}&month=${month}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    lastPayload = { data, year, month, resourceId };
+                    hideAlert();
                     renderCalendar(data, year, month, resourceId);
                 } else {
-                    alert('BĹ‚Ä…d: ' + data.message);
+                    showAlert('Błąd: ' + data.message);
                 }
             })
-            .catch(error => console.error('BĹ‚Ä…d Ĺ‚adowania danych:', error));
+            .catch(error => {
+                console.error('Błąd ładowania danych:', error);
+                showAlert('Nie udało się załadować kalendarza. Spróbuj ponownie.');
+            });
     }
 
     function renderCalendar(data, year, month, resourceId) {
@@ -275,34 +310,59 @@
             const dayDate = new Date(year, month - 1, day);
             const dateStr = dayDate.toISOString().split('T')[0];
 
-            // Add events
-            data.events.forEach(event => {
-                const eventDate = event.date.split('T')[0];
-                if (eventDate === dateStr) {
-                    const eventEl = document.createElement('div');
-                    eventEl.className = 'event-item';
-                    eventEl.textContent = event.title;
-                    eventEl.title = event.title;
-                    cell.querySelector('.day-items').appendChild(eventEl);
-                }
-            });
+            const itemsContainer = cell.querySelector('.day-items');
+            const maxItemsPerDay = 4;
+            let overflowCount = 0;
 
-            // Add reservations
-            data.reservations.forEach(reservation => {
-                const resDate = reservation.date.split('T')[0];
-                if (resDate === dateStr) {
-                    const resEl = document.createElement('div');
-                    resEl.className = 'reservation-item ' + reservation.status.toLowerCase();
-                    resEl.textContent = reservation.title.substring(0, 20);
-                    resEl.title = reservation.title;
-                    resEl.setAttribute('data-reservation-id', reservation.reservationId);
-                    resEl.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        viewReservation(reservation.reservationId);
-                    });
-                    cell.querySelector('.day-items').appendChild(resEl);
+            const tryAddItem = (element) => {
+                if (itemsContainer.childElementCount < maxItemsPerDay) {
+                    itemsContainer.appendChild(element);
+                } else {
+                    overflowCount++;
                 }
-            });
+            };
+
+            if (calendarState.showEvents) {
+                data.events.forEach(event => {
+                    const eventDate = event.date.split('T')[0];
+                    if (eventDate === dateStr) {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'event-item';
+                        eventEl.textContent = event.title;
+                        eventEl.title = event.title;
+                        tryAddItem(eventEl);
+                    }
+                });
+            }
+
+            if (calendarState.showReservations) {
+                data.reservations.forEach(reservation => {
+                    const resDate = reservation.date.split('T')[0];
+                    if (resDate === dateStr) {
+                        if (calendarState.statusFilter && reservation.status !== calendarState.statusFilter) {
+                            return;
+                        }
+
+                        const resEl = document.createElement('div');
+                        resEl.className = 'reservation-item ' + reservation.status.toLowerCase();
+                        resEl.textContent = reservation.title.substring(0, 24);
+                        resEl.title = reservation.title;
+                        resEl.setAttribute('data-reservation-id', reservation.reservationId);
+                        resEl.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            viewReservation(reservation.reservationId);
+                        });
+                        tryAddItem(resEl);
+                    }
+                });
+            }
+
+            if (overflowCount > 0) {
+                const moreEl = document.createElement('div');
+                moreEl.className = 'more-items';
+                moreEl.textContent = `+${overflowCount} więcej`;
+                itemsContainer.appendChild(moreEl);
+            }
 
             cellsContainer.appendChild(cell);
         }
@@ -364,6 +424,10 @@
     function setupEventListeners(resourceId) {
         const btn = document.getElementById('quickReservationBtn');
         const input = document.getElementById('quickReservationDate');
+        const toggleEvents = document.getElementById('toggleEvents');
+        const toggleReservations = document.getElementById('toggleReservations');
+        const statusFilter = document.getElementById('statusFilter');
+        const todayBtn = document.getElementById('todayBtn');
 
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -371,13 +435,54 @@
                 const date = new Date(input.value + 'T00:00:00');
                 createReservation(date);
             } else {
-                alert('Wybierz datÄ™ rezerwacji');
+                alert('Wybierz datę rezerwacji');
             }
         });
 
         // Set today's date as default
         const today = new Date();
         input.valueAsDate = today;
+
+        toggleEvents.addEventListener('change', () => {
+            calendarState.showEvents = toggleEvents.checked;
+            rerenderFromState();
+        });
+
+        toggleReservations.addEventListener('change', () => {
+            calendarState.showReservations = toggleReservations.checked;
+            rerenderFromState();
+        });
+
+        statusFilter.addEventListener('change', () => {
+            calendarState.statusFilter = statusFilter.value;
+            rerenderFromState();
+        });
+
+        todayBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const now = new Date();
+            window.location.href = `/Calendar?resourceId=${resourceId}&year=${now.getFullYear()}&month=${now.getMonth() + 1}`;
+        });
+    }
+
+    function rerenderFromState() {
+        if (!lastPayload) {
+            return;
+        }
+
+        renderCalendar(lastPayload.data, lastPayload.year, lastPayload.month, lastPayload.resourceId);
+    }
+
+    function showAlert(message) {
+        const alert = document.getElementById('calendarAlert');
+        alert.textContent = message;
+        alert.classList.remove('d-none');
+    }
+
+    function hideAlert() {
+        const alert = document.getElementById('calendarAlert');
+        alert.textContent = '';
+        alert.classList.add('d-none');
     }
 </script>
 

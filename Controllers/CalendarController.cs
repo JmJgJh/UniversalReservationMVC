@@ -63,6 +63,17 @@ namespace UniversalReservationMVC.Controllers
         {
             try
             {
+                // Verify resource exists
+                var resource = await _db.Resources.FindAsync(resourceId);
+                if (resource == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Zasób o ID {resourceId} nie został znaleziony."
+                    });
+                }
+
                 // Get first and last day of the month
                 var firstDay = new DateTime(year, month, 1);
                 var lastDay = firstDay.AddMonths(1).AddDays(-1);
@@ -93,10 +104,12 @@ namespace UniversalReservationMVC.Controllers
                     .Select(r => new
                     {
                         id = r.Id,
-                        title = (r.UserId != null ? "Rezerwacja: " : "Rezerwacja gościa: ") + 
-                                (r.User.FirstName + " " + r.User.LastName != null ? 
-                                 r.User.FirstName + " " + r.User.LastName : 
-                                 (r.GuestEmail != null ? r.GuestEmail : "Gość")),
+                        title = r.UserId != null
+                            ? "Rezerwacja: " +
+                              (r.User != null
+                                  ? (r.User.FirstName ?? string.Empty) + " " + (r.User.LastName ?? string.Empty)
+                                  : "Użytkownik")
+                            : "Rezerwacja gościa: " + (r.GuestEmail ?? "Gość"),
                         type = "reservation",
                         date = r.StartTime.Date,
                         startDate = r.StartTime,

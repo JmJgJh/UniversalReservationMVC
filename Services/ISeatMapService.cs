@@ -4,7 +4,8 @@ namespace UniversalReservationMVC.Services
 {
     public interface ISeatMapService
     {
-        Task<IEnumerable<Seat>> GetSeatMap(int resourceId);
-        Task<IEnumerable<Seat>> GenerateSeatGrid(int resourceId, int rows, int columns);
+        Task<IEnumerable<Seat>> GetSeatMapAsync(int resourceId);
+        Task<IEnumerable<Seat>> GenerateSeatGridAsync(int resourceId, int rows, int columns);
+        Task SaveSeatMapAsync(int resourceId, IEnumerable<Seat> seats);
     }
 }

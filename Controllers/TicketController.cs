@@ -32,6 +32,14 @@ namespace UniversalReservationMVC.Controllers
                 return NotFound();
             }
 
+            // Prevent buying a ticket if already purchased
+            var purchased = await _db.Tickets.AnyAsync(t => t.ReservationId == reservationId && t.Status == TicketStatus.Purchased);
+            if (purchased)
+            {
+                // Redirect to user's tickets; optionally show message 
+                return RedirectToAction(nameof(MyTickets));
+            }
+
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (reservation.UserId != userId && !User.IsInRole("Admin"))
             {
@@ -53,7 +61,15 @@ namespace UniversalReservationMVC.Controllers
         {
             try
             {
-                var ticket = await _ticketService.BuyTicket(reservationId, price);
+                // Prevent duplicate purchase
+                var purchased = await _db.Tickets.AnyAsync(t => t.ReservationId == reservationId && t.Status == TicketStatus.Purchased);
+                if (purchased)
+                {
+                    ModelState.AddModelError(string.Empty, "Bilet dla tej rezerwacji został już zakupiony.");
+                    ViewBag.ReservationId = reservationId;
+                    return View();
+                }
+                var ticket = await _ticketService.BuyTicketAsync(reservationId, price);
                 return RedirectToAction(nameof(MyTickets));
             }
             catch (Exception ex)
@@ -72,7 +88,7 @@ namespace UniversalReservationMVC.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var tickets = await _ticketService.GetTicketsForUser(userId);
+            var tickets = await _ticketService.GetTicketsForUserAsync(userId);
             return View(tickets);
         }
 
@@ -93,7 +109,7 @@ namespace UniversalReservationMVC.Controllers
 
             try
             {
-                await _ticketService.CancelTicket(ticketId);
+                await _ticketService.CancelTicketAsync(ticketId);
                 return RedirectToAction(nameof(MyTickets));
             }
             catch (Exception ex)
