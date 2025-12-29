@@ -4,6 +4,7 @@ using UniversalReservationMVC.Services;
 using UniversalReservationMVC.Models;
 using UniversalReservationMVC.Data;
 using Microsoft.EntityFrameworkCore;
+using UniversalReservationMVC.Extensions;
 
 namespace UniversalReservationMVC.Controllers
 {
@@ -40,7 +41,7 @@ namespace UniversalReservationMVC.Controllers
                 return RedirectToAction(nameof(MyTickets));
             }
 
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.GetCurrentUserId();
             if (reservation.UserId != userId && !User.IsInRole("Admin"))
             {
                 return Forbid();
@@ -82,7 +83,7 @@ namespace UniversalReservationMVC.Controllers
 
         public async Task<IActionResult> MyTickets()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.GetCurrentUserId();
             if (string.IsNullOrEmpty(userId))
             {
                 return RedirectToAction("Login", "Account");
@@ -99,7 +100,7 @@ namespace UniversalReservationMVC.Controllers
             var ticket = await _db.Tickets.FindAsync(ticketId);
             if (ticket == null) return NotFound();
 
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.GetCurrentUserId();
             
             // Sprawdź czy to bilet użytkownika
             if (ticket.Reservation?.UserId != userId && !User.IsInRole("Admin"))

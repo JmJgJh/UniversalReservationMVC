@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using UniversalReservationMVC.Hubs;
 using UniversalReservationMVC.Services;
 using System.Text.Json;
+using UniversalReservationMVC.Extensions;
 
 namespace UniversalReservationMVC.Controllers
 {
@@ -23,8 +24,8 @@ namespace UniversalReservationMVC.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSeatMap(int resourceId, int? eventId)
         {
-            var seats = await _db.Seats.Where(s => s.ResourceId == resourceId).ToListAsync();
-            var resource = await _db.Resources.FindAsync(resourceId);
+            var seats = await _db.Seats.AsNoTracking().Where(s => s.ResourceId == resourceId).ToListAsync();
+            var resource = await _db.Resources.AsNoTracking().FirstOrDefaultAsync(r => r.Id == resourceId);
             ViewBag.ResourceId = resourceId;
             ViewBag.ResourceName = resource?.Name;
 
@@ -110,7 +111,7 @@ namespace UniversalReservationMVC.Controllers
             }
 
             // Holder key: prefer userId, else use session id
-            var holderKey = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            var holderKey = User?.GetCurrentUserId()
                 ?? HttpContext.Session.Id;
 
             var ok = _holdService.TryHold(resourceId, seatId, start, end, holderKey, TimeSpan.FromSeconds(seconds));
@@ -126,7 +127,7 @@ namespace UniversalReservationMVC.Controllers
         [HttpDelete]
         public async Task<IActionResult> ReleaseHold(int resourceId, int seatId)
         {
-            var holderKey = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            var holderKey = User?.GetCurrentUserId()
                 ?? HttpContext.Session.Id;
             var released = _holdService.Release(resourceId, seatId, holderKey);
             if (released)

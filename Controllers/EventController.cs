@@ -4,6 +4,7 @@ using UniversalReservationMVC.Services;
 using UniversalReservationMVC.Models;
 using UniversalReservationMVC.Data;
 using Microsoft.EntityFrameworkCore;
+using UniversalReservationMVC.Extensions;
 
 namespace UniversalReservationMVC.Controllers
 {
@@ -28,13 +29,14 @@ namespace UniversalReservationMVC.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var events = await _db.Events.Include(e => e.Resource).ToListAsync();
+            var events = await _db.Events.AsNoTracking().Include(e => e.Resource).ToListAsync();
             return View(events);
         }
 
         public async Task<IActionResult> Details(int id)
         {
             var ev = await _db.Events
+                .AsNoTracking()
                 .Include(e => e.Resource)
                     .ThenInclude(r => r.Company)
                 .Include(e => e.RecurrencePattern)
@@ -61,7 +63,7 @@ namespace UniversalReservationMVC.Controllers
             ViewBag.AvailableSeats = totalSeats - reservedSeats;
             
             // Detect current user's reservation linked to this event or overlapping time window
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.GetCurrentUserId();
             if (!string.IsNullOrEmpty(userId))
             {
                 var userReservation = await _db.Reservations
@@ -90,9 +92,9 @@ namespace UniversalReservationMVC.Controllers
 
         [Authorize(Roles = "Admin,Owner")]
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewBag.Resources = _db.Resources.ToList();
+            ViewBag.Resources = await _db.Resources.ToListAsync();
             return View();
         }
 
@@ -155,7 +157,7 @@ namespace UniversalReservationMVC.Controllers
                 }
             }
             
-            ViewBag.Resources = _db.Resources.ToList();
+            ViewBag.Resources = await _db.Resources.ToListAsync();
             return View(model);
         }
 
@@ -165,7 +167,7 @@ namespace UniversalReservationMVC.Controllers
         {
             var ev = await _db.Events.FindAsync(id);
             if (ev == null) return NotFound();
-            ViewBag.Resources = _db.Resources.ToList();
+            ViewBag.Resources = await _db.Resources.ToListAsync();
             return View(ev);
         }
 
@@ -190,7 +192,7 @@ namespace UniversalReservationMVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.Resources = _db.Resources.ToList();
+            ViewBag.Resources = await _db.Resources.ToListAsync();
             return View(model);
         }
 

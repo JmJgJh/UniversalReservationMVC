@@ -20,13 +20,13 @@ namespace UniversalReservationMVC.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var resources = await _db.Resources.ToListAsync();
+            var resources = await _db.Resources.AsNoTracking().ToListAsync();
             return View(resources);
         }
 
         public async Task<IActionResult> Details(int id)
         {
-            var resource = await _db.Resources.FirstOrDefaultAsync(r => r.Id == id);
+            var resource = await _db.Resources.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
             if (resource == null) return NotFound();
             
             // Pobierz aktualne wydarzenie dla zasobu
