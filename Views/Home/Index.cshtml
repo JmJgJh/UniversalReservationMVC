@@ -1,32 +1,93 @@
+@using System.Linq
 @model IEnumerable<UniversalReservationMVC.Models.Resource>
 @{
     ViewData["Title"] = "Strona główna";
+    var hasResources = Model != null && Model.Any();
 }
-<div class="jumbotron bg-light p-5 rounded-lg">
-    <h1>Witaj w Universal Reservation System</h1>
-    <p class="lead">Rezerwuj zasoby online - restauracje, kina, biura, sale konferencji i teatry!</p>
-</div>
 
-<h2 class="mt-5">Dostępne zasoby</h2>
-<div class="row">
-    @foreach (var r in Model)
-    {
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">@r.Name</h5>
-                    <p class="card-text">
-                        <strong>Typ:</strong> @r.ResourceType<br />
-                        <strong>Lokalizacja:</strong> @r.Location
-                    </p>
-                    <a class="btn btn-primary" href="@Url.Action("Details", "Resource", new { id = r.Id })">Szczegóły</a>
+<section class="hero-banner gradient-hero text-white rounded-4 p-5 mb-5 shadow-lg">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <p class="text-uppercase fw-semibold mb-2 opacity-75">Rezerwacje w jednym miejscu</p>
+            <h1 class="display-5 fw-bold mb-3">Zarządzaj salami, miejscami i wydarzeniami bez chaosu</h1>
+            <p class="fs-5 mb-4 opacity-90">Szybkie rezerwacje online dla restauracji, kin, biur i scen. Wybieraj miejsca, płać, kontroluj frekwencję.</p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="@Url.Action("Index", "Resource")" class="btn btn-light btn-lg text-dark shadow-sm"><i class="fas fa-door-open me-2"></i>Przeglądaj zasoby</a>
+                <a href="@Url.Action("Index", "Event")" class="btn btn-outline-light btn-lg"><i class="fas fa-calendar-check me-2"></i>Wydarzenia</a>
+                <a href="@Url.Action("GetSeatMap", "Seat")" class="btn btn-outline-light btn-lg"><i class="fas fa-map me-2"></i>Mapa miejsc</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card p-4 h-100 d-flex flex-column justify-content-center">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-warning text-dark me-2"><i class="fas fa-bolt"></i> Live</span>
+                    <span class="text-white-50">Aktualne rezerwacje i wydarzenia</span>
+                </div>
+                <div class="row text-center g-3">
+                    <div class="col-4">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Dostęp online</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-number">3 min</div>
+                        <div class="stat-label">średni czas rezerwacji</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">kontrola miejsc</div>
+                    </div>
                 </div>
             </div>
         </div>
-    }
-</div>
+    </div>
+</section>
 
-<div class="mt-5">
-    <a href="@Url.Action("Index", "Resource")" class="btn btn-outline-primary me-2">Pełna lista zasobów</a>
-    <a href="@Url.Action("Index", "Event")" class="btn btn-outline-info">Wszystkie wydarzenia</a>
-</div>
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <p class="text-uppercase text-muted fw-semibold mb-1">Zasoby</p>
+            <h2 class="h3 mb-0">Gotowe do rezerwacji</h2>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Index", "Resource")" class="btn btn-outline-primary"><i class="fas fa-list me-2"></i>Pełna lista</a>
+            <a href="@Url.Action("Index", "Event")" class="btn btn-outline-info"><i class="fas fa-microphone me-2"></i>Wydarzenia</a>
+        </div>
+    </div>
+
+    @if (hasResources)
+    {
+        <div class="row g-4">
+            @foreach (var r in Model ?? Enumerable.Empty<UniversalReservationMVC.Models.Resource>())
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-lift">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary mb-2"><i class="fas fa-tag me-1"></i>@r.ResourceType</span>
+                                    <h5 class="card-title mb-0">@r.Name</h5>
+                                </div>
+                                <span class="badge bg-light text-muted"><i class="fas fa-map-marker-alt me-1"></i>@r.Location</span>
+                            </div>
+                            <p class="text-muted mb-3">Sprawdź dostępność, godziny otwarcia i mapę miejsc.</p>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-primary w-100" href="@Url.Action("Details", "Resource", new { id = r.Id })"><i class="fas fa-eye me-1"></i>Szczegóły</a>
+                                <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Reservation", new { resourceId = r.Id })"><i class="fas fa-chair me-1"></i>Rezerwuj</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <h5 class="mb-2">Brak zasobów do wyświetlenia</h5>
+                <p class="text-muted mb-4">Dodaj pierwszy zasób, aby rozpocząć przyjmowanie rezerwacji.</p>
+                <a href="@Url.Action("Create", "Resource")" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Dodaj zasób</a>
+            </div>
+        </div>
+    }
+</section>
