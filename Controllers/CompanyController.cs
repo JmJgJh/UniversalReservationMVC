@@ -17,19 +17,25 @@ namespace UniversalReservationMVC.Controllers
         private readonly ICompanyMemberService _companyMemberService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<CompanyController> _logger;
+        private readonly IEmailService _emailService;
+        private readonly IReportService _reportService;
 
         public CompanyController(
             ICompanyService companyService,
             ISeatMapService seatMapService,
             ICompanyMemberService companyMemberService,
             IUnitOfWork unitOfWork,
-            ILogger<CompanyController> logger)
+            ILogger<CompanyController> logger,
+            IEmailService emailService,
+            IReportService reportService)
         {
             _companyService = companyService;
             _seatMapService = seatMapService;
             _companyMemberService = companyMemberService;
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _emailService = emailService;
+            _reportService = reportService;
         }
 
         // Dashboard - main company panel
@@ -276,9 +282,121 @@ namespace UniversalReservationMVC.Controllers
                 return RedirectToAction("Create");
             }
 
-            var members = await _companyMemberService.GetCompanyMembersAsync(company.Id);
-            ViewBag.Company = company;
-            return View(members);
+            return View(company);
+        }
+
+        // Company settings (branding, colors, logo)
+        [HttpGet]
+        public async Task<IActionResult> Settings()
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null)
+            {
+                return Forbid();
+            }
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+
+            if (company == null)
+            {
+                return RedirectToAction("Create");
+            }
+
+            var model = new CompanySettingsViewModel
+            {
+                Id = company.Id,
+                Name = company.Name,
+                Description = company.Description,
+                Address = company.Address,
+                PhoneNumber = company.PhoneNumber,
+                Email = company.Email,
+                Website = company.Website,
+                LogoUrl = company.LogoUrl,
+                PrimaryColor = company.PrimaryColor,
+                SecondaryColor = company.SecondaryColor
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(CompanySettingsViewModel model)
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null)
+            {
+                return Forbid();
+            }
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+
+            if (company == null)
+            {
+                return RedirectToAction("Create");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            company.Name = model.Name;
+            company.Description = model.Description;
+            company.Address = model.Address;
+            company.PhoneNumber = model.PhoneNumber;
+            company.Email = model.Email;
+            company.Website = model.Website;
+            company.PrimaryColor = model.PrimaryColor;
+            company.SecondaryColor = model.SecondaryColor;
+            company.UpdatedAt = DateTime.UtcNow;
+
+            // Handle logo upload
+            if (model.LogoFile != null && model.LogoFile.Length > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".svg" };
+                var extension = Path.GetExtension(model.LogoFile.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("LogoFile", "Dozwolone formaty: JPG, PNG, GIF, SVG");
+                    return View(model);
+                }
+
+                if (model.LogoFile.Length > 2 * 1024 * 1024) // 2MB max
+                {
+                    ModelState.AddModelError("LogoFile", "Plik jest za duży (maksymalnie 2 MB)");
+                    return View(model);
+                }
+
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "logos");
+                Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = $"{company.Id}_{Guid.NewGuid()}{extension}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.LogoFile.CopyToAsync(fileStream);
+                }
+
+                // Delete old logo if exists
+                if (!string.IsNullOrEmpty(company.LogoUrl))
+                {
+                    var oldLogoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", company.LogoUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldLogoPath))
+                    {
+                        System.IO.File.Delete(oldLogoPath);
+                    }
+                }
+
+                company.LogoUrl = $"/uploads/logos/{uniqueFileName}";
+            }
+
+            await _companyService.UpdateCompanyAsync(company);
+
+            TempData["Success"] = "Ustawienia firmy zostały zaktualizowane.";
+            return RedirectToAction(nameof(Settings));
         }
 
         [HttpPost]
@@ -624,6 +742,31 @@ namespace UniversalReservationMVC.Controllers
             _unitOfWork.Reservations.Update(reservation);
             await _unitOfWork.SaveAsync();
 
+            // Send confirmation email
+            var email = reservation.User?.Email ?? reservation.GuestEmail;
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var userName = reservation.User?.FirstName ?? reservation.User?.UserName ?? "Gość";
+                var seat = reservation.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(reservation.SeatId.Value) : null;
+                var seatInfo = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : null;
+
+                try
+                {
+                    await _emailService.SendReservationConfirmationAsync(
+                        email,
+                        userName,
+                        resource.Name,
+                        reservation.StartTime,
+                        seatInfo,
+                        company.Name
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send confirmation email for reservation {ReservationId}", id);
+                }
+            }
+
             TempData["Success"] = "Rezerwacja została potwierdzona.";
             return RedirectToAction(nameof(Reservations));
         }
@@ -672,6 +815,28 @@ namespace UniversalReservationMVC.Controllers
             reservation.UpdatedAt = DateTime.UtcNow;
             _unitOfWork.Reservations.Update(reservation);
             await _unitOfWork.SaveAsync();
+
+            // Send cancellation email
+            var email = reservation.User?.Email ?? reservation.GuestEmail;
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var userName = reservation.User?.FirstName ?? reservation.User?.UserName ?? "Gość";
+
+                try
+                {
+                    await _emailService.SendReservationCancellationAsync(
+                        email,
+                        userName,
+                        resource.Name,
+                        reservation.StartTime,
+                        company.Name
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send cancellation email for reservation {ReservationId}", id);
+                }
+            }
 
             TempData["Success"] = "Rezerwacja została anulowana.";
             return RedirectToAction(nameof(Reservations));
@@ -732,6 +897,94 @@ namespace UniversalReservationMVC.Controllers
 
             ViewBag.Company = company;
             return View(report);
+        }
+
+        // Export reservations to PDF
+        [HttpGet]
+        public async Task<IActionResult> ExportReservationsPdf(DateTime? startDate, DateTime? endDate)
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null) return Forbid();
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+            if (company == null) return NotFound();
+
+            var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
+            var end = endDate ?? DateTime.UtcNow;
+
+            var reservations = await _unitOfWork.Reservations
+                .FindAsync(r => r.Resource != null && r.Resource.CompanyId == company.Id
+                    && r.StartTime >= start && r.StartTime <= end);
+
+            var pdf = await _reportService.GenerateReservationsPdfAsync(
+                reservations,
+                $"Rezerwacje: {company.Name}");
+
+            return File(pdf, "application/pdf", $"Rezerwacje_{DateTime.Now:yyyyMMdd}.pdf");
+        }
+
+        // Export reservations to Excel
+        [HttpGet]
+        public async Task<IActionResult> ExportReservationsExcel(DateTime? startDate, DateTime? endDate)
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null) return Forbid();
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+            if (company == null) return NotFound();
+
+            var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
+            var end = endDate ?? DateTime.UtcNow;
+
+            var reservations = await _unitOfWork.Reservations
+                .FindAsync(r => r.Resource != null && r.Resource.CompanyId == company.Id
+                    && r.StartTime >= start && r.StartTime <= end);
+
+            var excel = await _reportService.GenerateReservationsExcelAsync(
+                reservations,
+                "Rezerwacje");
+
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Rezerwacje_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        // Export financial summary to PDF
+        [HttpGet]
+        public async Task<IActionResult> ExportFinancialSummaryPdf(DateTime? startDate, DateTime? endDate)
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null) return Forbid();
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+            if (company == null) return NotFound();
+
+            var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
+            var end = endDate ?? DateTime.UtcNow;
+
+            var pdf = await _reportService.GenerateCompanySummaryPdfAsync(company, start, end);
+
+            return File(pdf, "application/pdf", $"Raport_Finansowy_{DateTime.Now:yyyyMMdd}.pdf");
+        }
+
+        // Export revenue report to Excel
+        [HttpGet]
+        public async Task<IActionResult> ExportRevenueExcel(DateTime? startDate, DateTime? endDate)
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null) return Forbid();
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+            if (company == null) return NotFound();
+
+            var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
+            var end = endDate ?? DateTime.UtcNow;
+
+            var excel = await _reportService.GenerateRevenueReportExcelAsync(company, start, end);
+
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Raport_Przychodow_{DateTime.Now:yyyyMMdd}.xlsx");
         }
     }
 

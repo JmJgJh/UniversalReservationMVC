@@ -32,6 +32,16 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// Email service
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Payment service
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+// Report service
+builder.Services.AddScoped<IReportService, ReportService>();
+
 // Application services
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<ISeatMapService, SeatMapService>();

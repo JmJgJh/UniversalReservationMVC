@@ -24,43 +24,47 @@
     <!-- Informacje o firmie -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card stats-card-primary text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Zasoby</h5>
-                    <p class="display-4 text-primary">@totalResources</p>
-                    <p class="text-muted">pomieszczeń / stanowisk</p>
-                    <a href="@Url.Action("Resources", "Company")" class="btn btn-sm btn-outline-primary">Zarządzaj</a>
+                    <i class="fas fa-door-open icon-lg"></i>
+                    <h5 class="card-title mt-3">Zasoby</h5>
+                    <p class="display-4">@totalResources</p>
+                    <p class="mb-3">pomieszczeń / stanowisk</p>
+                    <a href="@Url.Action("Resources", "Company")" class="btn btn-light btn-sm">Zarządzaj</a>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card stats-card-success text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Stanowiska</h5>
-                    <p class="display-4 text-success">@totalSeats</p>
-                    <p class="text-muted">wszystkie miejsca</p>
+                    <i class="fas fa-chair icon-lg"></i>
+                    <h5 class="card-title mt-3">Stanowiska</h5>
+                    <p class="display-4">@totalSeats</p>
+                    <p class="mb-3">wszystkie miejsca</p>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card stats-card-info text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Rezerwacje</h5>
-                    <p class="display-4 text-info">@totalReservations</p>
-                    <p class="text-muted">w tym miesiącu</p>
-                    <a href="@Url.Action("Reservations", "Company")" class="btn btn-sm btn-outline-info">Przegląd</a>
+                    <i class="fas fa-calendar-check icon-lg"></i>
+                    <h5 class="card-title mt-3">Rezerwacje</h5>
+                    <p class="display-4">@totalReservations</p>
+                    <p class="mb-3">w tym miesiącu</p>
+                    <a href="@Url.Action("Reservations", "Company")" class="btn btn-light btn-sm">Przegląd</a>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card stats-card-warning text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Zajętość</h5>
-                    <p class="display-4 text-warning">@occupancyRate%</p>
-                    <p class="text-muted">średnia zajętość</p>
+                    <i class="fas fa-chart-pie icon-lg"></i>
+                    <h5 class="card-title mt-3">Zajętość</h5>
+                    <p class="display-4">@occupancyRate%</p>
+                    <p class="mb-3">średnia zajętość</p>
                 </div>
             </div>
         </div>
@@ -103,22 +107,32 @@
                     <div class="row g-2">
                         <div class="col-md-6">
                             <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#createResourceModal">
-                                + Dodaj zasób
+                                <i class="fas fa-plus me-2"></i>Dodaj zasób
                             </button>
                         </div>
                         <div class="col-md-6">
                             <a href="@Url.Action("Resources", "Company")" class="btn btn-outline-info w-100">
-                                Zarządzaj zasobami
+                                <i class="fas fa-cog me-2"></i>Zarządzaj zasobami
                             </a>
                         </div>
                         <div class="col-md-6">
                             <a href="@Url.Action("Reservations", "Company")" class="btn btn-outline-success w-100">
-                                Przeglądaj rezerwacje
+                                <i class="fas fa-list me-2"></i>Przeglądaj rezerwacje
                             </a>
                         </div>
                         <div class="col-md-6">
                             <a href="@Url.Action("Reports", "Company")" class="btn btn-outline-warning w-100">
-                                Raporty
+                                <i class="fas fa-chart-bar me-2"></i>Raporty
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Members", "Company")" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-users me-2"></i>Członkowie
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Settings", "Company")" class="btn btn-outline-dark w-100">
+                                <i class="fas fa-sliders-h me-2"></i>Ustawienia
                             </a>
                         </div>
                     </div>

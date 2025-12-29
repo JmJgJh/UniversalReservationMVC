@@ -44,6 +44,7 @@ namespace UniversalReservationMVC.Controllers
             if (resource == null) return NotFound();
 
             var seat = seatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(seatId.Value) : null;
+            var seats = await _unitOfWork.Seats.GetByResourceIdAsync(resourceId);
             
             var vm = new ReservationCreateViewModel 
             { 
@@ -66,7 +67,8 @@ namespace UniversalReservationMVC.Controllers
             }
             
             ViewBag.ResourceName = resource.Name;
-            ViewBag.SeatLabel = seat?.Label ?? "Nieznane";
+            ViewBag.SeatLabel = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : "Wybierz miejsce";
+            ViewBag.Seats = seats.ToList();
             
             return View(vm);
         }
@@ -346,6 +348,27 @@ namespace UniversalReservationMVC.Controllers
                 _logger.LogError(ex, "Error cancelling reservation {ReservationId}", id);
                 TempData["ErrorMessage"] = ex.Message;
                 return RedirectToAction(nameof(MyReservations));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckAvailability(int resourceId, DateTime start, DateTime end)
+        {
+            try
+            {
+                var reservations = await _unitOfWork.Reservations.GetByResourceIdAsync(resourceId, start, end);
+                var reservedSeatIds = reservations
+                    .Where(r => r.SeatId.HasValue && r.Status != ReservationStatus.Cancelled)
+                    .Select(r => r.SeatId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                return Json(new { reservedSeatIds });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking availability for resource {ResourceId}", resourceId);
+                return Json(new { reservedSeatIds = new List<int>() });
             }
         }
     }

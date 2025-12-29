@@ -10,14 +10,17 @@ namespace UniversalReservationMVC.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHubContext<SeatHub>? _hub;
         private readonly ILogger<ReservationService> _logger;
+        private readonly IEmailService _emailService;
 
         public ReservationService(
             IUnitOfWork unitOfWork, 
             ILogger<ReservationService> logger,
+            IEmailService emailService,
             IHubContext<SeatHub>? hub = null)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _emailService = emailService;
             _hub = hub;
         }
 
@@ -48,6 +51,31 @@ namespace UniversalReservationMVC.Services
             await _unitOfWork.SaveAsync();
 
             _logger.LogInformation("Reservation {ReservationId} created successfully", reservation.Id);
+
+            // Send confirmation email
+            if (reservation.User != null)
+            {
+                var resource = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
+                var seat = reservation.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(reservation.SeatId.Value) : null;
+                var seatInfo = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : null;
+                var companyName = resource?.Company?.Name ?? "System Rezerwacji";
+
+                try
+                {
+                    await _emailService.SendReservationConfirmationAsync(
+                        reservation.User.Email ?? string.Empty,
+                        reservation.User.FirstName ?? reservation.User.UserName ?? "Użytkownik",
+                        resource?.Name ?? "Zasób",
+                        reservation.StartTime,
+                        seatInfo,
+                        companyName
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send confirmation email for reservation {ReservationId}", reservation.Id);
+                }
+            }
 
             if (_hub != null && reservation.SeatId.HasValue)
             {
@@ -96,6 +124,31 @@ namespace UniversalReservationMVC.Services
             await _unitOfWork.SaveAsync();
 
             _logger.LogInformation("Guest reservation {ReservationId} created successfully", reservation.Id);
+
+            // Send confirmation email to guest
+            if (!string.IsNullOrWhiteSpace(reservation.GuestEmail))
+            {
+                var resource = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
+                var seat = reservation.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(reservation.SeatId.Value) : null;
+                var seatInfo = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : null;
+                var companyName = resource?.Company?.Name ?? "System Rezerwacji";
+
+                try
+                {
+                    await _emailService.SendReservationConfirmationAsync(
+                        reservation.GuestEmail,
+                        "Gość",
+                        resource?.Name ?? "Zasób",
+                        reservation.StartTime,
+                        seatInfo,
+                        companyName
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send confirmation email for guest reservation {ReservationId}", reservation.Id);
+                }
+            }
 
             return reservation;
         }
@@ -163,6 +216,30 @@ namespace UniversalReservationMVC.Services
             await _unitOfWork.SaveAsync();
 
             _logger.LogInformation("Reservation {ReservationId} cancelled successfully", reservationId);
+
+            // Send cancellation email
+            var email = reservation.User?.Email ?? reservation.GuestEmail;
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var resource = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
+                var userName = reservation.User?.FirstName ?? reservation.User?.UserName ?? "Gość";
+                var companyName = resource?.Company?.Name ?? "System Rezerwacji";
+
+                try
+                {
+                    await _emailService.SendReservationCancellationAsync(
+                        email,
+                        userName,
+                        resource?.Name ?? "Zasób",
+                        reservation.StartTime,
+                        companyName
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send cancellation email for reservation {ReservationId}", reservationId);
+                }
+            }
 
             if (_hub != null && reservation.SeatId.HasValue)
             {

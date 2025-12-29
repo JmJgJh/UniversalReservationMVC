@@ -1,0 +1,250 @@
+@* Seat Picker Partial - Visual seat selection with SignalR real-time updates *@
+@model (int ResourceId, DateTime? StartTime, DateTime? EndTime, List<UniversalReservationMVC.Models.Seat> Seats)
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-chair me-2"></i>Wybierz miejsce</h5>
+    </div>
+    <div class="card-body p-0" style="height: 400px; overflow: hidden; position: relative;">
+        <svg id="seatPickerSvg" width="100%" height="100%" viewBox="0 0 800 400" style="cursor: pointer; background: #f8f9fa;">
+            <defs>
+                <filter id="seatShadow">
+                    <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.3"/>
+                </filter>
+            </defs>
+            <g id="seatsPickerGroup"></g>
+        </svg>
+    </div>
+    <div class="card-footer">
+        <div class="row text-center small">
+            <div class="col">
+                <i class="fas fa-square text-success me-1"></i> Dostępne
+            </div>
+            <div class="col">
+                <i class="fas fa-square text-warning me-1"></i> Wybrane
+            </div>
+            <div class="col">
+                <i class="fas fa-square text-danger me-1"></i> Zajęte
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const resourceId = @Model.ResourceId;
+    const seats = @Html.Raw(Json.Serialize(Model.Seats ?? new List<UniversalReservationMVC.Models.Seat>()));
+    let selectedSeatId = null;
+    let reservedSeats = new Set();
+
+    const svg = document.getElementById('seatPickerSvg');
+    const seatsGroup = document.getElementById('seatsPickerGroup');
+
+    // Connect to SignalR hub for real-time updates
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/seatHub")
+        .build();
+
+    connection.on("SeatReserved", function (data) {
+        if (data.resourceId === resourceId) {
+            reservedSeats.add(data.seatId);
+            updateSeatVisual(data.seatId, 'reserved');
+        }
+    });
+
+    connection.on("SeatReservationCancelled", function (data) {
+        if (data.resourceId === resourceId) {
+            reservedSeats.delete(data.seatId);
+            updateSeatVisual(data.seatId, 'available');
+        }
+    });
+
+    connection.start()
+        .then(() => connection.invoke("JoinResourceGroup", resourceId.toString()))
+        .catch(err => console.error('SignalR connection error:', err));
+
+    // Initialize seat picker
+    function initPicker() {
+        renderSeats();
+        checkAvailability();
+    }
+
+    // Render all seats
+    function renderSeats() {
+        seatsGroup.innerHTML = '';
+        
+        if (seats.length === 0) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', '400');
+            text.setAttribute('y', '200');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('font-size', '18');
+            text.setAttribute('fill', '#6c757d');
+            text.textContent = 'Brak dostępnych miejsc';
+            seatsGroup.appendChild(text);
+            return;
+        }
+
+        seats.forEach(seat => {
+            drawSeat(seat);
+        });
+    }
+
+    // Draw individual seat
+    function drawSeat(seat) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('data-seat-id', seat.id);
+        g.setAttribute('transform', `translate(${seat.x}, ${seat.y})`);
+        g.style.cursor = 'pointer';
+
+        const status = reservedSeats.has(seat.id) ? 'reserved' : 'available';
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('width', '35');
+        rect.setAttribute('height', '35');
+        rect.setAttribute('rx', '4');
+        rect.setAttribute('fill', getColorForStatus(status));
+        rect.setAttribute('filter', 'url(#seatShadow)');
+        rect.setAttribute('stroke', '#fff');
+        rect.setAttribute('stroke-width', '2');
+        rect.classList.add('seat-rect');
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', '17.5');
+        text.setAttribute('y', '22');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', '11');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('fill', 'white');
+        text.textContent = `${seat.x}${seat.y}`;
+
+        g.appendChild(rect);
+        g.appendChild(text);
+        seatsGroup.appendChild(g);
+
+        // Click to select
+        g.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (reservedSeats.has(seat.id)) {
+                alert('To miejsce jest już zajęte.');
+                return;
+            }
+            selectSeat(seat);
+        });
+
+        // Hover effect
+        g.addEventListener('mouseenter', () => {
+            if (!reservedSeats.has(seat.id)) {
+                rect.setAttribute('stroke', '#ffc107');
+                rect.setAttribute('stroke-width', '3');
+            }
+        });
+
+        g.addEventListener('mouseleave', () => {
+            if (selectedSeatId !== seat.id) {
+                rect.setAttribute('stroke', '#fff');
+                rect.setAttribute('stroke-width', '2');
+            }
+        });
+    }
+
+    // Select seat
+    function selectSeat(seat) {
+        selectedSeatId = seat.id;
+        
+        // Update hidden form field
+        const seatIdInput = document.querySelector('input[name="SeatId"]');
+        if (seatIdInput) {
+            seatIdInput.value = seat.id;
+        }
+
+        // Update label
+        const seatLabel = document.getElementById('seatLabel');
+        if (seatLabel) {
+            seatLabel.textContent = `Rząd ${seat.x}, Miejsce ${seat.y}`;
+        }
+
+        // Visual update
+        document.querySelectorAll('#seatsPickerGroup > g').forEach(g => {
+            const rect = g.querySelector('.seat-rect');
+            const seatId = parseInt(g.getAttribute('data-seat-id'));
+            
+            if (seatId === seat.id) {
+                rect.setAttribute('fill', '#ffc107');
+                rect.setAttribute('stroke', '#ffc107');
+                rect.setAttribute('stroke-width', '3');
+            } else if (!reservedSeats.has(seatId)) {
+                rect.setAttribute('fill', '#28a745');
+                rect.setAttribute('stroke', '#fff');
+                rect.setAttribute('stroke-width', '2');
+            }
+        });
+    }
+
+    // Update seat visual
+    function updateSeatVisual(seatId, status) {
+        const g = document.querySelector(`[data-seat-id="${seatId}"]`);
+        if (!g) return;
+
+        const rect = g.querySelector('.seat-rect');
+        rect.setAttribute('fill', getColorForStatus(status));
+
+        if (status === 'reserved' && selectedSeatId === seatId) {
+            selectedSeatId = null;
+            const seatIdInput = document.querySelector('input[name="SeatId"]');
+            if (seatIdInput) seatIdInput.value = '';
+            const seatLabel = document.getElementById('seatLabel');
+            if (seatLabel) seatLabel.textContent = 'Brak';
+        }
+    }
+
+    // Get color for status
+    function getColorForStatus(status) {
+        switch(status) {
+            case 'available': return '#28a745';
+            case 'selected': return '#ffc107';
+            case 'reserved': return '#dc3545';
+            default: return '#6c757d';
+        }
+    }
+
+    // Check availability via AJAX
+    async function checkAvailability() {
+        const startTime = document.querySelector('input[name="StartTime"]')?.value;
+        const endTime = document.querySelector('input[name="EndTime"]')?.value;
+
+        if (!startTime || !endTime) return;
+
+        try {
+            const response = await fetch(`/Reservation/CheckAvailability?resourceId=${resourceId}&start=${encodeURIComponent(startTime)}&end=${encodeURIComponent(endTime)}`);
+            if (response.ok) {
+                const data = await response.json();
+                reservedSeats = new Set(data.reservedSeatIds || []);
+                renderSeats();
+            }
+        } catch (error) {
+            console.error('Availability check failed:', error);
+        }
+    }
+
+    // Re-check when dates change
+    document.addEventListener('change', (e) => {
+        if (e.target.matches('input[name="StartTime"], input[name="EndTime"]')) {
+            checkAvailability();
+        }
+    });
+
+    // Initialize
+    initPicker();
+})();
+</script>
+
+<style>
+    #seatPickerSvg .seat-rect {
+        transition: all 0.2s ease;
+    }
+
+    #seatsPickerGroup > g:hover .seat-rect {
+        transform: scale(1.1);
+    }
+</style>

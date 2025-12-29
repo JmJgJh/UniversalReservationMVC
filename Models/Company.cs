@@ -41,6 +41,12 @@ namespace UniversalReservationMVC.Models
         [StringLength(500)]
         public string? LogoUrl { get; set; }
 
+        [StringLength(7)]
+        public string? PrimaryColor { get; set; }
+
+        [StringLength(7)]
+        public string? SecondaryColor { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         // Navigation properties

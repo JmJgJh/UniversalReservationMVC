@@ -17,7 +17,7 @@ namespace UniversalReservationMVC.Tests
             var unit = new InMemoryUnitOfWork();
             await unit.Seats.AddAsync(new Seat { Id = 1, ResourceId = 2, X = 1, Y = 1 });
 
-            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>());
+            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>(), Mock.Of<IEmailService>());
             var available = await service.IsSeatAvailableAsync(resourceId: 9, seatId: 1, start: DateTime.UtcNow, end: DateTime.UtcNow.AddHours(1));
 
             Assert.False(available);
@@ -27,7 +27,7 @@ namespace UniversalReservationMVC.Tests
         public async Task CreateGuestReservation_Throws_WhenMissingContact()
         {
             var unit = new InMemoryUnitOfWork();
-            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>());
+            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>(), Mock.Of<IEmailService>());
 
             var reservation = new Reservation
             {
@@ -57,7 +57,7 @@ namespace UniversalReservationMVC.Tests
                 EndTime = DateTime.UtcNow.AddHours(2)
             });
 
-            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>());
+            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>(), Mock.Of<IEmailService>());
 
             var newReservation = new Reservation
             {
@@ -76,7 +76,7 @@ namespace UniversalReservationMVC.Tests
             var unit = new InMemoryUnitOfWork();
             await unit.Seats.AddAsync(new Seat { Id = 1, ResourceId = 7, X = 1, Y = 1 });
 
-            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>());
+            var service = new ReservationService(unit, Mock.Of<ILogger<ReservationService>>(), Mock.Of<IEmailService>());
 
             var reservation = new Reservation
             {
@@ -105,7 +105,8 @@ namespace UniversalReservationMVC.Tests
 
             var fakeHub = new FakeHubContext<SeatHub>();
             var logger = Mock.Of<ILogger<ReservationService>>();
-            var service = new ReservationService(unit, logger, fakeHub);
+            var emailService = Mock.Of<IEmailService>();
+            var service = new ReservationService(unit, logger, emailService, fakeHub);
 
             var reservation = new Reservation
             {

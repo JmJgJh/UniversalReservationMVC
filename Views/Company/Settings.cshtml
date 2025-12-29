@@ -1,0 +1,182 @@
+@model UniversalReservationMVC.ViewModels.CompanySettingsViewModel
+
+@{
+    ViewData["Title"] = "Ustawienia firmy";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Informacje podstawowe</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Settings" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="LogoUrl" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label"></label>
+                            <input asp-for="Address" class="form-control" />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label"></label>
+                                <input asp-for="PhoneNumber" class="form-control" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" class="form-control" type="email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Website" class="form-label"></label>
+                            <input asp-for="Website" class="form-control" type="url" />
+                            <span asp-validation-for="Website" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <h5>Branding</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="LogoFile" class="form-label"></label>
+                            @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                            {
+                                <div class="mb-2">
+                                    <img src="@Model.LogoUrl" alt="Logo firmy" style="max-width: 200px; max-height: 100px;" class="img-thumbnail" />
+                                </div>
+                            }
+                            <input asp-for="LogoFile" class="form-control" type="file" accept=".jpg,.jpeg,.png,.gif,.svg" />
+                            <span asp-validation-for="LogoFile" class="text-danger"></span>
+                            <div class="form-text">Dozwolone formaty: JPG, PNG, GIF, SVG. Maksymalnie 2 MB.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PrimaryColor" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="PrimaryColor" class="form-control" type="color" value="@(Model.PrimaryColor ?? "#007bff")" />
+                                    <input asp-for="PrimaryColor" class="form-control" type="text" placeholder="#007bff" />
+                                </div>
+                                <span asp-validation-for="PrimaryColor" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SecondaryColor" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="SecondaryColor" class="form-control" type="color" value="@(Model.SecondaryColor ?? "#6c757d")" />
+                                    <input asp-for="SecondaryColor" class="form-control" type="text" placeholder="#6c757d" />
+                                </div>
+                                <span asp-validation-for="SecondaryColor" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="Dashboard" class="btn btn-secondary">Anuluj</a>
+                            <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Podgląd kolorów</h5>
+                </div>
+                <div class="card-body">
+                    <div id="color-preview">
+                        <div class="mb-3">
+                            <strong>Kolor główny:</strong>
+                            <div class="p-3 rounded mt-2" id="primary-preview" style="background-color: @(Model.PrimaryColor ?? "#007bff"); color: white;">
+                                Przykładowy tekst
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Kolor dodatkowy:</strong>
+                            <div class="p-3 rounded mt-2" id="secondary-preview" style="background-color: @(Model.SecondaryColor ?? "#6c757d"); color: white;">
+                                Przykładowy tekst
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Wskazówki</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Logo będzie wyświetlane w nagłówku panelu firmowego</li>
+                        <li>Kolory zostaną zastosowane w interfejsie rezerwacji</li>
+                        <li>Zalecamy kontrastowe kolory dla lepszej czytelności</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Live color preview
+        document.querySelectorAll('input[type="color"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const textInput = this.nextElementSibling;
+                if (textInput) {
+                    textInput.value = this.value;
+                }
+                updatePreview();
+            });
+        });
+
+        document.querySelectorAll('input[type="text"][name*="Color"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const colorInput = this.previousElementSibling;
+                if (colorInput && /^#[0-9A-F]{6}$/i.test(this.value)) {
+                    colorInput.value = this.value;
+                    updatePreview();
+                }
+            });
+        });
+
+        function updatePreview() {
+            const primaryColor = document.querySelector('input[name="PrimaryColor"][type="color"]').value;
+            const secondaryColor = document.querySelector('input[name="SecondaryColor"][type="color"]').value;
+
+            document.getElementById('primary-preview').style.backgroundColor = primaryColor;
+            document.getElementById('secondary-preview').style.backgroundColor = secondaryColor;
+        }
+    </script>
+}

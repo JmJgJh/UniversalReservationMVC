@@ -9,577 +9,370 @@
     <form id="seatMapCsrf" method="post" asp-antiforgery="true"></form>
     <div class="row mb-4">
         <div class="col">
-            <h1>🗺️ Mapa pomieszczeń: @Model.Name</h1>
-            <p class="text-muted">@Model.Location | Stanowiska: @(Model.Seats?.Count ?? 0)</p>
+            <h1><i class="fas fa-map-marked-alt me-2"></i>Mapa pomieszczeń: @Model.Name</h1>
+            <p class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>@Model.Location | <i class="fas fa-chair me-1"></i>Stanowiska: <strong id="totalSeatsCount">@(Model.Seats?.Count ?? 0)</strong></p>
         </div>
         <div class="col-auto">
-            <a href="@Url.Action("Resources", "Company")" class="btn btn-outline-secondary">← Wróć</a>
+            <button id="saveMapBtn" class="btn btn-success me-2"><i class="fas fa-save me-1"></i>Zapisz mapę</button>
+            <a href="@Url.Action("Resources", "Company")" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Wróć</a>
         </div>
     </div>
 
     <div class="row g-3">
-        <!-- Mapa SVG -->
+        <!-- SVG Canvas -->
         <div class="col-lg-8">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">📐 Interaktywna mapa pomieszczeń</h5>
-                    <small class="badge bg-light text-dark">Zoom: <span id="zoomLevel">100</span>%</small>
-                </div>
-                <div class="card-body p-4 bg-light" style="min-height: 600px; overflow: hidden;">
-                    <div id="seatMapSvgWrapper" class="text-center" style="position: relative; width: 100%; height: 100%; overflow: auto; border: 2px solid #ddd; border-radius: 8px; background: white;">
-                        <svg id="seatMapSvg" width="800" height="500" viewBox="0 0 800 500" style="cursor: move;">
-                            <!-- Stanowiska będą rysowane tutaj -->
-                            <defs>
-                                <pattern id="gridPattern" width="50" height="50" patternUnits="userSpaceOnUse">
-                                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#eee" stroke-width="0.5"/>
-                                </pattern>
-                            </defs>
-                            <rect width="800" height="500" fill="url(#gridPattern)" />
-                            <g id="seatsGroup"></g>
-                        </svg>
+                    <h5 class="mb-0"><i class="fas fa-grip-horizontal me-2"></i>Interaktywna mapa</h5>
+                    <div>
+                        <button id="zoomInBtn" class="btn btn-light btn-sm me-1"><i class="fas fa-search-plus"></i></button>
+                        <button id="zoomOutBtn" class="btn btn-light btn-sm me-1"><i class="fas fa-search-minus"></i></button>
+                        <button id="resetZoomBtn" class="btn btn-light btn-sm"><i class="fas fa-undo"></i></button>
                     </div>
+                </div>
+                <div class="card-body p-0 bg-light" style="height: 600px; overflow: hidden; position: relative;">
+                    <svg id="seatMapSvg" width="100%" height="100%" viewBox="0 0 1000 600" style="cursor: crosshair; background: white;">
+                        <defs>
+                            <pattern id="gridPattern" width="50" height="50" patternUnits="userSpaceOnUse">
+                                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e9ecef" stroke-width="1"/>
+                            </pattern>
+                            <filter id="shadow">
+                                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+                            </filter>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#gridPattern)" />
+                        <g id="seatsGroup"></g>
+                    </svg>
                 </div>
             </div>
         </div>
 
-        <!-- Panel kontrolny -->
+        <!-- Control Panel -->
         <div class="col-lg-4">
-            <div class="card shadow-sm mb-3">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">⚙️ Ustawienia</h5>
+            <!-- Add Seat Card -->
+            <div class="card shadow mb-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Dodaj stanowisko</h5>
                 </div>
                 <div class="card-body">
-                    <div class="form-group mb-3">
-                        <label class="form-label"><strong>Rozmiar stanowiska</strong></label>
-                        <div class="input-group">
-                            <input type="range" id="seatSize" class="form-range" value="30" min="15" max="60" />
-                            <span class="input-group-text" id="seatSizeValue">30px</span>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Identyfikator (Rząd)</label>
+                        <input type="text" id="newSeatRow" class="form-control" placeholder="np. A, 1" />
                     </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label"><strong>Kolor stanowiska</strong></label>
-                        <div class="row g-2">
-                            <div class="col">
-                                <button class="btn btn-sm btn-success w-100" id="colorAvailable" title="Dostępne">
-                                    🟢 Dostępne
-                                </button>
-                            </div>
-                            <div class="col">
-                                <button class="btn btn-sm btn-warning w-100" id="colorReserved" title="Zarezerwowane">
-                                    🟡 Zarezerwowane
-                                </button>
-                            </div>
-                            <div class="col">
-                                <button class="btn btn-sm btn-danger w-100" id="colorUnavailable" title="Niedostępne">
-                                    🔴 Niedostępne
-                                </button>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Numer (Miejsce)</label>
+                        <input type="number" id="newSeatNumber" class="form-control" placeholder="np. 1, 2, 3" min="1" />
                     </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label"><strong>Tryb rysowania</strong></label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="drawMode" id="modeAdd" value="add" checked>
-                            <label class="btn btn-outline-success" for="modeAdd">➕ Dodaj</label>
-                            
-                            <input type="radio" class="btn-check" name="drawMode" id="modeRemove" value="remove">
-                            <label class="btn btn-outline-danger" for="modeRemove">🗑️ Usuń</label>
-
-                            <input type="radio" class="btn-check" name="drawMode" id="modePan" value="pan">
-                            <label class="btn btn-outline-info" for="modePan">✋ Pan</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label"><strong>Opcje dodatkowe</strong></label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="snapToGrid" checked>
-                            <label class="form-check-label" for="snapToGrid">
-                                🧲 Przyciąganie do gridu
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="showLabels" checked>
-                            <label class="form-check-label" for="showLabels">
-                                📝 Pokaż etykiety
-                            </label>
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <div class="form-group mb-3">
-                        <label class="form-label"><strong>Zoom</strong></label>
-                        <div class="input-group">
-                            <button class="btn btn-outline-secondary" id="zoomOut">−</button>
-                            <input type="range" id="zoomSlider" class="form-range" value="100" min="50" max="200" />
-                            <button class="btn btn-outline-secondary" id="zoomIn">+</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label"><strong>Akcje</strong></label>
-                        <div class="d-grid gap-2">
-                            <button id="saveMapBtn" class="btn btn-success btn-lg">
-                                💾 Zapisz mapę
-                            </button>
-                            <button id="exportSvgBtn" class="btn btn-outline-info btn-sm">
-                                📥 Export SVG
-                            </button>
-                            <button id="clearAllBtn" class="btn btn-outline-danger btn-sm">
-                                🗑️ Wyczyść wszystko
-                            </button>
-                        </div>
-                    </div>
+                    <button id="addSeatBtn" class="btn btn-success w-100"><i class="fas fa-plus me-1"></i>Dodaj na mapie</button>
+                    <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i>Kliknij na mapie aby umieścić stanowisko</div>
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-3">
+            <!-- Seat List -->
+            <div class="card shadow">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">📊 Statystyka</h5>
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Lista stanowisk</h5>
                 </div>
-                <div class="card-body">
-                    <p class="mb-1"><strong>Stanowiska razem:</strong> <span id="seatCount" class="badge bg-primary">0</span></p>
-                    <p class="mb-1"><strong>Dostępne:</strong> <span id="availableCount" class="badge bg-success">0</span></p>
-                    <p class="mb-1"><strong>Zarezerwowane:</strong> <span id="reservedCount" class="badge bg-warning">0</span></p>
-                    <p class="mb-0"><strong>Niedostępne:</strong> <span id="unavailableCount" class="badge bg-danger">0</span></p>
+                <div class="card-body p-0">
+                    <div id="seatsList" class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">ℹ️ Instrukcja</h5>
+            <!-- Legend -->
+            <div class="card shadow mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Legenda</h5>
                 </div>
-                <div class="card-body small">
-                    <p><strong>🖱️ Kliknij na mapę</strong> aby dodać stanowisko</p>
-                    <p><strong>🗑️ Zmień tryb</strong> na "Usuń" aby usuwać</p>
-                    <p><strong>✋ Pan tryb</strong> aby przesuwać mapę</p>
-                    <p><strong>🖱️ 2x klik</strong> na stanowisku aby zmienić etykietę</p>
-                    <p><strong>⚙️ Kolory</strong> przydziel status stanowiskom</p>
-                    <p><strong>💾 Zapisz</strong> aby przesłać na serwer</p>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div style="width: 30px; height: 30px; background: #28a745; border-radius: 4px; margin-right: 10px;"></div>
+                        <span>Dostępne</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div style="width: 30px; height: 30px; background: #ffc107; border-radius: 4px; margin-right: 10px;"></div>
+                        <span>Wybrane</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div style="width: 30px; height: 30px; background: #dc3545; border-radius: 4px; margin-right: 10px;"></div>
+                        <span>Zajęte</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    #seatMapSvgWrapper {
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        background: white;
-        touch-action: none;
-    }
-
-    #seatMapSvg {
-        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-        display: block;
-        margin: 0 auto;
-    }
-
-    .seat-svg {
-        transition: all 0.15s ease;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-        cursor: pointer;
-    }
-
-    .seat-svg:hover {
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
-    }
-
-    .seat-svg.available {
-        fill: #28a745;
-        stroke: #155724;
-        stroke-width: 2;
-    }
-
-    .seat-svg.reserved {
-        fill: #ffc107;
-        stroke: #e0a800;
-        stroke-width: 2;
-    }
-
-    .seat-svg.unavailable {
-        fill: #dc3545;
-        stroke: #c82333;
-        stroke-width: 2;
-    }
-
-    .seat-svg.selected {
-        filter: drop-shadow(0 0 0 3px rgba(0, 123, 255, 0.5));
-        r: 18;
-    }
-
-    .seat-label {
-        font-size: 12px;
-        font-weight: bold;
-        pointer-events: none;
-        user-select: none;
-        dominant-baseline: middle;
-        text-anchor: middle;
-        fill: white;
-    }
-
-    .seat-label.dark {
-        fill: #333;
-    }
-
-    .card-header {
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-    svg {
-        max-width: 100%;
-        height: auto;
-    }
-
-    #seatMapSvgWrapper {
-        background-image: 
-            linear-gradient(0deg, #f9f9f9 0%, transparent 1%),
-            linear-gradient(90deg, #f9f9f9 0%, transparent 1%);
-        background-size: 50px 50px;
-    }
-
-    input[type="color"] {
-        cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        padding: 4px;
-    }
-</style>
-
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/signalr@1.0.27/dist/browser/signalr.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const resourceId = @Model.Id;
-        const svg = document.getElementById('seatMapSvg');
-        const wrapper = document.getElementById('seatMapSvgWrapper');
-        const seatsGroup = document.getElementById('seatsGroup');
-        const seatSizeInput = document.getElementById('seatSize');
-        const seatSizeValue = document.getElementById('seatSizeValue');
-        const saveBtn = document.getElementById('saveMapBtn');
-        const clearBtn = document.getElementById('clearAllBtn');
-        const exportBtn = document.getElementById('exportSvgBtn');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const zoomLevel = document.getElementById('zoomLevel');
-        const zoomIn = document.getElementById('zoomIn');
-        const zoomOut = document.getElementById('zoomOut');
-        const snapToGridCheckbox = document.getElementById('snapToGrid');
-        const showLabelsCheckbox = document.getElementById('showLabels');
-        const seatCountSpan = document.getElementById('seatCount');
-        const availableCountSpan = document.getElementById('availableCount');
-        const reservedCountSpan = document.getElementById('reservedCount');
-        const unavailableCountSpan = document.getElementById('unavailableCount');
-        const antiForgeryToken = document.querySelector('[name="__RequestVerificationToken"]')?.value;
+    const resourceId = @Model.Id;
+    let seats = @Html.Raw(Json.Serialize(Model.Seats ?? new List<Seat>()));
+    let selectedSeatId = null;
+    let addingMode = false;
+    let pendingClickPosition = null;
+    let scale = 1;
 
-        let seats = [];
-        let seatSize = 30;
-        let drawMode = 'add';
-        let zoom = 1;
-        let panX = 0, panY = 0;
-        let isPanning = false;
-        let startPanX = 0, startPanY = 0;
-        let selectedSeatIndex = -1;
-        let doubleClickTimer = null;
-        let currentSeatColor = 'available';
+    const svg = document.getElementById('seatMapSvg');
+    const seatsGroup = document.getElementById('seatsGroup');
+    const seatsList = document.getElementById('seatsList');
 
-        // Wczytanie istniejących stanowisk
-        function loadExistingSeats() {
-            @if (Model.Seats != null && Model.Seats.Count > 0)
-            {
-                <text>
-                seats = [
-                @foreach (var seat in Model.Seats)
-                {
-                    <text>
-                    { x: @seat.X, y: @seat.Y, label: '@seat.Label', id: @seat.Id, status: '@(seat.IsAvailable ? "available" : "unavailable")' },
-                    </text>
+    // Initialize map
+    function initMap() {
+        renderSeats();
+        updateSeatsList();
+    }
+
+    // Render all seats
+    function renderSeats() {
+        seatsGroup.innerHTML = '';
+        seats.forEach(seat => {
+            drawSeat(seat);
+        });
+    }
+
+    // Draw individual seat
+    function drawSeat(seat) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('data-seat-id', seat.id);
+        g.setAttribute('transform', `translate(${seat.x}, ${seat.y})`);
+        g.style.cursor = 'move';
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('width', '40');
+        rect.setAttribute('height', '40');
+        rect.setAttribute('rx', '4');
+        rect.setAttribute('fill', seat.isReserved ? '#dc3545' : '#28a745');
+        rect.setAttribute('filter', 'url(#shadow)');
+        rect.setAttribute('stroke', '#fff');
+        rect.setAttribute('stroke-width', '2');
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', '20');
+        text.setAttribute('y', '25');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', '12');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('fill', 'white');
+        text.textContent = `${seat.x}${seat.y}`;
+
+        g.appendChild(rect);
+        g.appendChild(text);
+        seatsGroup.appendChild(g);
+
+        // Drag functionality
+        let isDragging = false;
+        let startX, startY, offsetX, offsetY;
+
+        g.addEventListener('mousedown', (e) => {
+            if (addingMode) return;
+            isDragging = true;
+            selectedSeatId = seat.id;
+            highlightSeat(seat.id);
+            
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+            startX = svgPt.x;
+            startY = svgPt.y;
+            offsetX = seat.x;
+            offsetY = seat.y;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+            const dx = svgPt.x - startX;
+            const dy = svgPt.y - startY;
+            seat.x = Math.max(0, Math.min(960, offsetX + dx));
+            seat.y = Math.max(0, Math.min(560, offsetY + dy));
+            g.setAttribute('transform', `translate(${seat.x}, ${seat.y})`);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                updateSeatsList();
+            }
+        });
+
+        g.addEventListener('dblclick', () => {
+            if (confirm(`Usunąć stanowisko ${seat.x}${seat.y}?`)) {
+                deleteSeat(seat.id);
+            }
+        });
+    }
+
+    // Highlight selected seat
+    function highlightSeat(seatId) {
+        document.querySelectorAll('#seatsGroup > g').forEach(g => {
+            const rect = g.querySelector('rect');
+            if (g.getAttribute('data-seat-id') == seatId) {
+                rect.setAttribute('stroke', '#ffc107');
+                rect.setAttribute('stroke-width', '4');
+            } else {
+                rect.setAttribute('stroke', '#fff');
+                rect.setAttribute('stroke-width', '2');
+            }
+        });
+    }
+
+    // Add seat mode
+    document.getElementById('addSeatBtn').addEventListener('click', () => {
+        const row = document.getElementById('newSeatRow').value.trim();
+        const num = parseInt(document.getElementById('newSeatNumber').value);
+        
+        if (!row || !num) {
+            alert('Podaj rząd i numer stanowiska');
+            return;
+        }
+
+        addingMode = true;
+        svg.style.cursor = 'crosshair';
+        document.getElementById('addSeatBtn').classList.add('btn-warning');
+        document.getElementById('addSeatBtn').classList.remove('btn-success');
+        document.getElementById('addSeatBtn').innerHTML = '<i class="fas fa-map-marker-alt me-1"></i>Kliknij na mapie...';
+    });
+
+    // Click to place seat
+    svg.addEventListener('click', (e) => {
+        if (!addingMode) return;
+
+        const row = document.getElementById('newSeatRow').value.trim();
+        const num = parseInt(document.getElementById('newSeatNumber').value);
+
+        if (!row || !num) return;
+
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+        const newSeat = {
+            id: Math.max(0, ...seats.map(s => s.id || 0)) + 1,
+            x: Math.max(0, Math.min(960, svgPt.x - 20)),
+            y: Math.max(0, Math.min(560, svgPt.y - 20)),
+            resourceId: resourceId,
+            isReserved: false
+        };
+
+        seats.push(newSeat);
+        drawSeat(newSeat);
+        updateSeatsList();
+
+        // Reset add mode
+        addingMode = false;
+        svg.style.cursor = 'move';
+        document.getElementById('addSeatBtn').classList.remove('btn-warning');
+        document.getElementById('addSeatBtn').classList.add('btn-success');
+        document.getElementById('addSeatBtn').innerHTML = '<i class="fas fa-plus me-1"></i>Dodaj na mapie';
+        document.getElementById('newSeatRow').value = '';
+        document.getElementById('newSeatNumber').value = '';
+    });
+
+    // Delete seat
+    function deleteSeat(seatId) {
+        seats = seats.filter(s => s.id !== seatId);
+        renderSeats();
+        updateSeatsList();
+    }
+
+    // Update seats list
+    function updateSeatsList() {
+        seatsList.innerHTML = '';
+        document.getElementById('totalSeatsCount').textContent = seats.length;
+        
+        if (seats.length === 0) {
+            seatsList.innerHTML = '<div class="p-3 text-center text-muted"><i class="fas fa-inbox fa-2x mb-2"></i><br>Brak stanowisk</div>';
+            return;
+        }
+
+        seats.forEach(seat => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
+            item.innerHTML = `
+                <div>
+                    <i class="fas fa-chair text-${seat.isReserved ? 'danger' : 'success'} me-2"></i>
+                    <strong>${seat.x}${seat.y}</strong>
+                    <small class="text-muted"> (X:${Math.round(seat.x)}, Y:${Math.round(seat.y)})</small>
+                </div>
+                <button class="btn btn-sm btn-danger" onclick="deleteSeat(${seat.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            item.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    selectedSeatId = seat.id;
+                    highlightSeat(seat.id);
                 }
-                ];
-                </text>
-            }
-            redrawSeats();
-        }
-
-        // Zmiana rozmiaru stanowiska
-        seatSizeInput.addEventListener('input', function() {
-            seatSize = parseInt(this.value);
-            seatSizeValue.textContent = seatSize + 'px';
-            redrawSeats();
-        });
-
-        // Zmiana koloru stanowiska
-        document.getElementById('colorAvailable').addEventListener('click', function() {
-            currentSeatColor = 'available';
-            this.classList.add('active');
-            document.getElementById('colorReserved').classList.remove('active');
-            document.getElementById('colorUnavailable').classList.remove('active');
-        });
-
-        document.getElementById('colorReserved').addEventListener('click', function() {
-            currentSeatColor = 'reserved';
-            this.classList.add('active');
-            document.getElementById('colorAvailable').classList.remove('active');
-            document.getElementById('colorUnavailable').classList.remove('active');
-        });
-
-        document.getElementById('colorUnavailable').addEventListener('click', function() {
-            currentSeatColor = 'unavailable';
-            this.classList.add('active');
-            document.getElementById('colorAvailable').classList.remove('active');
-            document.getElementById('colorReserved').classList.remove('active');
-        });
-
-        // Zmiana trybu rysowania
-        document.querySelectorAll('input[name="drawMode"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                drawMode = this.value;
-                svg.style.cursor = drawMode === 'pan' ? 'grab' : (drawMode === 'add' ? 'crosshair' : 'pointer');
             });
+            seatsList.appendChild(item);
         });
+    }
 
-        // Zoom
-        zoomSlider.addEventListener('input', function() {
-            zoom = parseInt(this.value) / 100;
-            zoomLevel.textContent = this.value;
-            svg.style.transform = `scale(${zoom})`;
-            svg.style.transformOrigin = '0 0';
-        });
+    // Zoom controls
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+        scale = Math.min(2, scale + 0.1);
+        seatsGroup.setAttribute('transform', `scale(${scale})`);
+    });
 
-        zoomIn.addEventListener('click', function() {
-            zoomSlider.value = Math.min(200, parseInt(zoomSlider.value) + 10);
-            zoomSlider.dispatchEvent(new Event('input'));
-        });
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+        scale = Math.max(0.5, scale - 0.1);
+        seatsGroup.setAttribute('transform', `scale(${scale})`);
+    });
 
-        zoomOut.addEventListener('click', function() {
-            zoomSlider.value = Math.max(50, parseInt(zoomSlider.value) - 10);
-            zoomSlider.dispatchEvent(new Event('input'));
-        });
+    document.getElementById('resetZoomBtn').addEventListener('click', () => {
+        scale = 1;
+        seatsGroup.setAttribute('transform', 'scale(1)');
+    });
 
-        // Kliknięcie na mapę - dodawanie/usuwanie stanowisk
-        svg.addEventListener('click', function(e) {
-            if (drawMode === 'pan') return;
+    // Save map
+    document.getElementById('saveMapBtn').addEventListener('click', async () => {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const saveBtn = document.getElementById('saveMapBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Zapisywanie...';
 
-            const rect = svg.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / zoom;
-            const y = (e.clientY - rect.top) / zoom;
-
-            if (drawMode === 'add') {
-                addSeat(x, y);
-            }
-        });
-
-        // Pan (przeciąganie mapy)
-        svg.addEventListener('mousedown', function(e) {
-            if (drawMode !== 'pan') return;
-            isPanning = true;
-            startPanX = e.clientX;
-            startPanY = e.clientY;
-            svg.style.cursor = 'grabbing';
-        });
-
-        document.addEventListener('mousemove', function(e) {
-            if (!isPanning) return;
-            panX += e.clientX - startPanX;
-            panY += e.clientY - startPanY;
-            wrapper.scrollLeft -= e.clientX - startPanX;
-            wrapper.scrollTop -= e.clientY - startPanY;
-            startPanX = e.clientX;
-            startPanY = e.clientY;
-        });
-
-        document.addEventListener('mouseup', function() {
-            isPanning = false;
-            if (drawMode === 'pan') {
-                svg.style.cursor = 'grab';
-            }
-        });
-
-        // Dodanie nowego stanowiska
-        function addSeat(x, y) {
-            const gridSize = snapToGridCheckbox.checked ? 50 : 1;
-            const snappedX = Math.round(x / gridSize) * gridSize;
-            const snappedY = Math.round(y / gridSize) * gridSize;
-
-            const existingIndex = seats.findIndex(s => Math.abs(s.x - snappedX) < 15 && Math.abs(s.y - snappedY) < 15);
-            if (existingIndex > -1) return;
-
-            const label = generateLabel(seats.length + 1);
-            seats.push({ x: snappedX, y: snappedY, label, id: null, status: currentSeatColor });
-            redrawSeats();
-        }
-
-        // Usunięcie stanowiska
-        function removeSeat(index) {
-            seats.splice(index, 1);
-            redrawSeats();
-        }
-
-        // Generowanie etykiety stanowiska
-        function generateLabel(index) {
-            const row = String.fromCharCode(64 + Math.ceil(index / 10));
-            const col = ((index - 1) % 10) + 1;
-            return row + col;
-        }
-
-        // Redrawowanie wszystkich stanowisk
-        function redrawSeats() {
-            seatsGroup.innerHTML = '';
-
-            seats.forEach((seat, index) => {
-                // Kółko stanowiska
-                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('cx', seat.x);
-                circle.setAttribute('cy', seat.y);
-                circle.setAttribute('r', seatSize / 2);
-                circle.setAttribute('class', `seat-svg ${seat.status}`);
-                circle.setAttribute('data-index', index);
-
-                // Etykieta stanowiska
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', seat.x);
-                text.setAttribute('y', seat.y);
-                text.setAttribute('class', `seat-label ${seat.status === 'reserved' ? 'dark' : ''}`);
-                text.setAttribute('data-index', index);
-                text.style.display = showLabelsCheckbox.checked ? 'block' : 'none';
-                text.textContent = seat.label;
-
-                // Interaktywność
-                circle.addEventListener('mouseenter', function() {
-                    circle.classList.add('selected');
-                });
-
-                circle.addEventListener('mouseleave', function() {
-                    if (selectedSeatIndex !== index) {
-                        circle.classList.remove('selected');
-                    }
-                });
-
-                circle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    selectedSeatIndex = index;
-
-                    if (drawMode === 'remove') {
-                        removeSeat(index);
-                        selectedSeatIndex = -1;
-                    } else {
-                        // Double click to edit label
-                        if (doubleClickTimer) {
-                            clearTimeout(doubleClickTimer);
-                            editSeatLabel(index);
-                            doubleClickTimer = null;
-                        } else {
-                            doubleClickTimer = setTimeout(() => {
-                                doubleClickTimer = null;
-                            }, 300);
-                        }
-                    }
-                });
-
-                circle.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                    removeSeat(index);
-                });
-
-                seatsGroup.appendChild(circle);
-                seatsGroup.appendChild(text);
-            });
-
-            showLabelsCheckbox.addEventListener('change', function() {
-                document.querySelectorAll('.seat-label').forEach(el => {
-                    el.style.display = this.checked ? 'block' : 'none';
-                });
-            });
-
-            updateStats();
-        }
-
-        // Edytowanie etykiety stanowiska
-        function editSeatLabel(index) {
-            const newLabel = prompt('Zmień etykietę stanowiska:', seats[index].label);
-            if (newLabel && newLabel.trim()) {
-                seats[index].label = newLabel.trim();
-                redrawSeats();
-            }
-        }
-
-        // Aktualizacja statystyk
-        function updateStats() {
-            const total = seats.length;
-            const available = seats.filter(s => s.status === 'available').length;
-            const reserved = seats.filter(s => s.status === 'reserved').length;
-            const unavailable = seats.filter(s => s.status === 'unavailable').length;
-
-            seatCountSpan.textContent = total;
-            availableCountSpan.textContent = available;
-            reservedCountSpan.textContent = reserved;
-            unavailableCountSpan.textContent = unavailable;
-        }
-
-        // Zapisanie mapy
-        saveBtn.addEventListener('click', function() {
-            if (seats.length === 0) {
-                alert('⚠️ Dodaj przynajmniej jedno stanowisko!');
-                return;
-            }
-
-            const data = seats.map(s => ({
-                x: s.x,
-                y: s.y,
-                label: s.label,
-                status: s.status
-            }));
-
-            fetch('@Url.Action("SaveSeatMap", "Company")?resourceId=' + resourceId, {
+        try {
+            const response = await fetch('/Company/SaveSeatMap', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': antiForgeryToken ?? ''
+                    'RequestVerificationToken': token
                 },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert('✅ ' + (result.message || 'Mapa pomieszczeń została zapisana!'));
-                } else {
-                    alert('❌ Błąd: ' + (result.message || 'Nie udało się zapisać mapy'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Błąd sieci: ' + error.message);
+                body: JSON.stringify({
+                    resourceId: resourceId,
+                    seats: seats.map(s => ({
+                        id: s.id || 0,
+                        x: Math.round(s.x),
+                        y: Math.round(s.y),
+                        resourceId: resourceId
+                    }))
+                })
             });
-        });
 
-        // Export SVG
-        exportBtn.addEventListener('click', function() {
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml' });
-            const svgUrl = URL.createObjectURL(svgBlob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = svgUrl;
-            downloadLink.download = '@Model.Name-mapa-pomieszczeń.svg';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(svgUrl);
-        });
-
-        // Wyczyszczenie wszystkich stanowisk
-        clearBtn.addEventListener('click', function() {
-            if (confirm('🗑️ Czy na pewno chcesz wyczyścić całą mapę?')) {
-                seats = [];
-                selectedSeatIndex = -1;
-                redrawSeats();
+            if (response.ok) {
+                alert('✓ Mapa została zapisana');
+                window.location.reload();
+            } else {
+                const error = await response.text();
+                alert('Błąd zapisu: ' + error);
             }
-        });
-
-        // Inicjalizacja
-        loadExistingSeats();
+        } catch (error) {
+            alert('Błąd połączenia: ' + error.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Zapisz mapę';
+        }
     });
+
+    // Initialize on load
+    initMap();
 </script>
 }

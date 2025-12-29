@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UniversalReservationMVC.Data;
 
@@ -10,9 +11,11 @@ using UniversalReservationMVC.Data;
 namespace UniversalReservationMVC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229120812_AddPaymentsTable")]
+    partial class AddPaymentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -433,9 +436,6 @@ namespace UniversalReservationMVC.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("ResourceId")
                         .HasColumnType("INTEGER");
 
@@ -496,9 +496,6 @@ namespace UniversalReservationMVC.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("ResourceType")
                         .HasColumnType("INTEGER");

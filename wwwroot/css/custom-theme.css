@@ -1,0 +1,534 @@
+/* Custom theme for Universal Reservation System */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-radius: 8px;
+    --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* Global improvements */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: var(--light-color);
+    border-bottom: 2px solid var(--primary-color);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.btn-danger {
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: var(--border-radius);
+    border: 1px solid #dee2e6;
+    padding: 0.625rem 1rem;
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+/* Tables */
+.table {
+    background-color: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.table thead {
+    background-color: var(--light-color);
+    color: var(--dark-color);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    cursor: pointer;
+}
+
+/* Badges */
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* Alerts */
+.alert {
+    border-radius: var(--border-radius);
+    border: none;
+    padding: 1rem 1.5rem;
+    box-shadow: var(--box-shadow);
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Navigation */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link {
+    transition: var(--transition);
+    border-radius: var(--border-radius);
+    margin: 0 0.25rem;
+}
+
+.nav-link:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Dashboard stats cards */
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: var(--box-shadow);
+}
+
+.stats-card .display-4 {
+    font-weight: 700;
+    margin: 1rem 0;
+}
+
+.stats-card-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.stats-card-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.stats-card-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+}
+
+.stats-card-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+/* Modals */
+.modal-content {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* Pagination */
+.pagination .page-link {
+    border-radius: var(--border-radius);
+    margin: 0 0.25rem;
+    transition: var(--transition);
+}
+
+.pagination .page-link:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.25rem;
+}
+
+/* Sidebar (if applicable) */
+.sidebar {
+    background-color: white;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+}
+
+.sidebar .nav-link {
+    color: var(--dark-color);
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    border-radius: var(--border-radius);
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--light-color);
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Icon enhancements */
+.icon-lg {
+    font-size: 2rem;
+}
+
+.icon-xl {
+    font-size: 3rem;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--secondary-color);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .table {
+        font-size: 0.9rem;
+    }
+
+    /* Mobile navigation */
+    .navbar-nav {
+        text-align: center;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+    }
+
+    /* Stack stats cards vertically */
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+
+    /* Reduce icon sizes */
+    .icon-lg {
+        font-size: 1.5rem;
+    }
+
+    .icon-xl {
+        font-size: 2rem;
+    }
+
+    .display-4 {
+        font-size: 2rem;
+    }
+
+    /* Mobile forms */
+    .form-control, .form-select {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    /* Mobile tables - enable horizontal scroll */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Seat map mobile optimization */
+    #seatMapSvg, #seatPickerSvg {
+        max-width: 100%;
+        height: auto;
+        touch-action: none;
+    }
+
+    /* Modal full-width on mobile */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    /* Touch-friendly buttons */
+    .btn-sm {
+        min-height: 44px; /* iOS accessibility minimum */
+        min-width: 44px;
+    }
+
+    /* Reduce padding in cards */
+    .card-header, .card-footer {
+        padding: 0.75rem 1rem;
+    }
+
+    /* Stack action buttons */
+    .d-md-flex {
+        flex-direction: column !important;
+    }
+
+    .d-md-flex .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small screens */
+    body {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    /* Compact stat cards */
+    .stats-card .display-4 {
+        font-size: 1.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .stats-card {
+        padding: 1rem;
+    }
+
+    /* Hide less important columns in tables */
+    .table .d-none-mobile {
+        display: none !important;
+    }
+
+    /* Seat map compact view */
+    #seatsGroup, #seatsPickerGroup {
+        transform: scale(0.8);
+        transform-origin: top left;
+    }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+    .navbar {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Tablet optimization */
+@media (min-width: 768px) and (max-width: 992px) {
+    .stats-card {
+        padding: 1.25rem;
+    }
+
+    .stats-card .display-4 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase tap target sizes */
+    .btn, .nav-link, .list-group-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Remove hover effects on touch devices */
+    .card:hover {
+        transform: none;
+        box-shadow: var(--box-shadow);
+    }
+
+    .btn:hover {
+        transform: none;
+    }
+
+    /* Touch-friendly seat map */
+    .seat {
+        cursor: pointer;
+        -webkit-tap-highlight-color: rgba(0, 123, 255, 0.2);
+    }
+
+    /* Disable problematic hover effects */
+    .table-hover tbody tr:hover {
+        background-color: transparent;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Seat map specific */
+.seat {
+    transition: var(--transition);
+}
+
+.seat:hover {
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.seat.available {
+    fill: #28a745;
+}
+
+.seat.reserved {
+    fill: #dc3545;
+}
+
+.seat.selected {
+    fill: #ffc107;
+}
+
+.seat.pending {
+    fill: #6c757d;
+}

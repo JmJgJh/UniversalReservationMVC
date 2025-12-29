@@ -87,7 +87,8 @@ namespace UniversalReservationMVC.Tests
                 seatMapService.Object,
                 companyMemberService.Object,
                 unitOfWork.Object,
-                logger)
+                logger,
+                Mock.Of<IEmailService>())
             {
                 ControllerContext = new ControllerContext
                 {

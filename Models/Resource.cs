@@ -32,6 +32,11 @@ namespace UniversalReservationMVC.Models
         [Range(1, 10000, ErrorMessage = "Pojemność musi być między 1 a 10000")]
         public int? Capacity { get; set; }
 
+        // Pricing
+        [Column(TypeName = "decimal(18, 2)")]
+        [Range(0, 999999.99, ErrorMessage = "Cena musi być między 0 a 999999.99")]
+        public decimal Price { get; set; } = 0;
+
         // Company association (resource belongs to a company owner)
         public int? CompanyId { get; set; }
 

@@ -472,3 +472,7 @@ c:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\obj\Debug\net
 c:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\obj\Debug\net8.0\UniversalReservationMVC.Tests.genruntimeconfig.cache
 c:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\obj\Debug\net8.0\ref\UniversalReservationMVC.Tests.dll
 c:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.InMemory.dll
+C:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\bin\Debug\net8.0\UniversalReservationMVC.staticwebassets.runtime.json
+C:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\bin\Debug\net8.0\Stripe.net.dll
+C:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\workspace\UniversalReservationMVC\UniversalReservationMVC.Tests\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll

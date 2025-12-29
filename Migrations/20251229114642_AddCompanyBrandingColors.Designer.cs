@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UniversalReservationMVC.Data;
 
@@ -10,9 +11,11 @@ using UniversalReservationMVC.Data;
 namespace UniversalReservationMVC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229114642_AddCompanyBrandingColors")]
+    partial class AddCompanyBrandingColors
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -360,56 +363,6 @@ namespace UniversalReservationMVC.Migrations
                     b.ToTable("Events");
                 });
 
-            modelBuilder.Entity("UniversalReservationMVC.Models.Payment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FailureReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Metadata")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ReservationId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("StripeChargeId")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("StripePaymentIntentId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReservationId");
-
-                    b.ToTable("Payments");
-                });
-
             modelBuilder.Entity("UniversalReservationMVC.Models.Reservation", b =>
                 {
                     b.Property<int>("Id")
@@ -432,9 +385,6 @@ namespace UniversalReservationMVC.Migrations
                     b.Property<string>("GuestPhone")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ResourceId")
                         .HasColumnType("INTEGER");
@@ -496,9 +446,6 @@ namespace UniversalReservationMVC.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("ResourceType")
                         .HasColumnType("INTEGER");
@@ -681,17 +628,6 @@ namespace UniversalReservationMVC.Migrations
                         .IsRequired();
 
                     b.Navigation("Resource");
-                });
-
-            modelBuilder.Entity("UniversalReservationMVC.Models.Payment", b =>
-                {
-                    b.HasOne("UniversalReservationMVC.Models.Reservation", "Reservation")
-                        .WithMany()
-                        .HasForeignKey("ReservationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Reservation");
                 });
 
             modelBuilder.Entity("UniversalReservationMVC.Models.Reservation", b =>

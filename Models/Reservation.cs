@@ -34,6 +34,9 @@ namespace UniversalReservationMVC.Models
         [Required]
         public ReservationStatus Status { get; set; } = ReservationStatus.Pending;
 
+        // Payment status
+        public bool IsPaid { get; set; } = false;
+
         // Optional link to event
         public int? EventId { get; set; }
         public Event? Event { get; set; }
