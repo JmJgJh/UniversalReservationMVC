@@ -94,13 +94,13 @@ namespace UniversalReservationMVC.Controllers
 
         public async Task<IActionResult> Resources()
         {
-            var resources = await _db.Resources.ToListAsync();
+            var resources = await _db.Resources.AsNoTracking().ToListAsync();
             return View(resources);
         }
 
         public async Task<IActionResult> Events()
         {
-            var events = await _db.Events.Include(e => e.Resource).ToListAsync();
+            var events = await _db.Events.AsNoTracking().Include(e => e.Resource).ToListAsync();
             return View(events);
         }
 

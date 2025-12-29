@@ -94,7 +94,7 @@ namespace UniversalReservationMVC.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            ViewBag.Resources = await _db.Resources.ToListAsync();
+            ViewBag.Resources = await _db.Resources.AsNoTracking().ToListAsync();
             return View();
         }
 
@@ -167,7 +167,7 @@ namespace UniversalReservationMVC.Controllers
         {
             var ev = await _db.Events.FindAsync(id);
             if (ev == null) return NotFound();
-            ViewBag.Resources = await _db.Resources.ToListAsync();
+            ViewBag.Resources = await _db.Resources.AsNoTracking().ToListAsync();
             return View(ev);
         }
 
@@ -192,7 +192,7 @@ namespace UniversalReservationMVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.Resources = await _db.Resources.ToListAsync();
+            ViewBag.Resources = await _db.Resources.AsNoTracking().ToListAsync();
             return View(model);
         }
 
