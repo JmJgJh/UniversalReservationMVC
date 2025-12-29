@@ -33,10 +33,21 @@ namespace UniversalReservationMVC.ViewComponents
 
             if (hasCompany)
             {
-                return View("Default", true);
+                var viewMode = HttpContext.Session.GetString("ViewMode") ?? "owner";
+                return View("Default", new CompanyNavViewModel 
+                { 
+                    HasCompany = true,
+                    ViewMode = viewMode
+                });
             }
 
             return Content(string.Empty);
         }
+    }
+
+    public class CompanyNavViewModel
+    {
+        public bool HasCompany { get; set; }
+        public string ViewMode { get; set; } = "owner";
     }
 }
