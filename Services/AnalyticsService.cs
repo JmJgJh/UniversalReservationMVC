@@ -21,6 +21,7 @@ namespace UniversalReservationMVC.Services
             try
             {
                 var reservations = await _context.Reservations
+                    .AsNoTracking()
                     .Include(r => r.Resource)
                     .Where(r => r.Resource != null && r.Resource.CompanyId == companyId
                         && r.StartTime >= startDate && r.StartTime <= endDate)

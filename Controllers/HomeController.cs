@@ -13,6 +13,7 @@ namespace UniversalReservationMVC.Controllers
         private readonly ApplicationDbContext _db;
         public HomeController(ApplicationDbContext db) => _db = db;
 
+        [ResponseCache(Duration = 60, VaryByQueryKeys = new string[] { })]  
         public async Task<IActionResult> Index()
         {
             // If user is authenticated, redirect to dashboard
@@ -21,7 +22,7 @@ namespace UniversalReservationMVC.Controllers
                 return RedirectToAction(nameof(Dashboard));
             }
             
-            var resources = await _db.Resources.Take(10).ToListAsync();
+            var resources = await _db.Resources.AsNoTracking().Take(10).ToListAsync();
             return View(resources);
         }
 
@@ -39,6 +40,7 @@ namespace UniversalReservationMVC.Controllers
             var viewModel = new UserDashboardViewModel
             {
                 UpcomingReservations = await _db.Reservations
+                    .AsNoTracking()
                     .Include(r => r.Resource)
                     .Include(r => r.Event)
                     .Include(r => r.Seat)
@@ -48,6 +50,7 @@ namespace UniversalReservationMVC.Controllers
                     .ToListAsync(),
                 
                 PastReservations = await _db.Reservations
+                    .AsNoTracking()
                     .Include(r => r.Resource)
                     .Include(r => r.Event)
                     .Where(r => r.UserId == userId && r.EndTime < now)
@@ -56,6 +59,7 @@ namespace UniversalReservationMVC.Controllers
                     .ToListAsync(),
                 
                 UpcomingEvents = await _db.Events
+                    .AsNoTracking()
                     .Include(e => e.Resource)
                     .Where(e => e.StartTime > now)
                     .OrderBy(e => e.StartTime)

@@ -61,6 +61,7 @@ namespace UniversalReservationMVC.Services
         public async Task<List<Event>> GetOccurrencesAsync(int eventId, DateTime startDate, DateTime endDate)
         {
             var templateEvent = await _context.Events
+                .AsNoTracking()
                 .Include(e => e.RecurrencePattern)
                 .FirstOrDefaultAsync(e => e.Id == eventId);
 

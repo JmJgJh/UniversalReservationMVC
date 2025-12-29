@@ -25,7 +25,7 @@ public class ReportService : IReportService
         _logger = logger;
         
         // Set EPPlus license (version 8+)
-        OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     }
 
     public async Task<byte[]> GenerateReservationsPdfAsync(IEnumerable<Reservation> reservations, string title)
@@ -205,8 +205,7 @@ public class ReportService : IReportService
 
     public async Task<byte[]> GenerateCompanySummaryPdfAsync(Company company, DateTime startDate, DateTime endDate)
     {
-        var reservations = await _context.Reservations
-            .Include(r => r.Resource)
+        var reservations = await _context.Reservations            .AsNoTracking()            .Include(r => r.Resource)
             .Include(r => r.User)
             .Where(r => r.Resource!.CompanyId == company.Id
                 && r.StartTime >= startDate
@@ -214,8 +213,7 @@ public class ReportService : IReportService
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-        var payments = await _context.Payments
-            .Include(p => p.Reservation)
+        var payments = await _context.Payments            .AsNoTracking()            .Include(p => p.Reservation)
                 .ThenInclude(r => r!.Resource)
             .Where(p => p.Reservation!.Resource!.CompanyId == company.Id
                 && p.Status == PaymentStatus.Succeeded

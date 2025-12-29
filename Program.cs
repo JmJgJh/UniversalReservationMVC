@@ -4,8 +4,68 @@ using UniversalReservationMVC.Data;
 using UniversalReservationMVC.Models;
 using UniversalReservationMVC.Services;
 using UniversalReservationMVC.Repositories;
+using Serilog;
+using AspNetCoreRateLimit;
+using Microsoft.OpenApi.Models;
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/app-.log",
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+        retainedFileCountLimit: 30
+    )
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Use Serilog for logging
+builder.Host.UseSerilog();
+
+// Use Serilog for logging
+builder.Host.UseSerilog();
+
+// Rate limiting configuration
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.HttpStatusCode = 429;
+    options.RealIpHeader = "X-Real-IP";
+    options.ClientIdHeader = "X-ClientId";
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*/Reservation/Create",
+            Period = "1m",
+            Limit = 10
+        },
+        new RateLimitRule
+        {
+            Endpoint = "*/Reservation/Edit",
+            Period = "1m",
+            Limit = 10
+        },
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Period = "1m",
+            Limit = 100
+        }
+    };
+});
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
 
 // Database: default to SQLite. Change to MSSQL in appsettings if desired.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -40,6 +100,38 @@ builder.Services.AddControllersWithViews()
         options.DataAnnotationLocalizerProvider = (type, factory) =>
             factory.Create(typeof(UniversalReservationMVC.Resources.SharedResources));
     });
+
+// Response caching for better performance
+builder.Services.AddResponseCaching();
+
+// Memory cache
+builder.Services.AddMemoryCache();
+
+// Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Universal Reservation System API",
+        Version = "v1",
+        Description = "API for managing reservations, resources, events, and companies",
+        Contact = new OpenApiContact
+        {
+            Name = "Universal Reservation Team",
+            Email = "support@universalreservation.pl"
+        }
+    });
+    
+    // Include XML comments if available
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
+
 builder.Services.AddSignalR();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -83,11 +175,6 @@ builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICompanyMemberRepository, CompanyMemberRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Logging
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
 
 var app = builder.Build();
 
@@ -151,6 +238,20 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "An error occurred while seeding the database.");
     }
+    
+    // Seed demo data
+    try
+    {
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var seederLogger = services.GetRequiredService<ILogger<DatabaseSeeder>>();
+        var seeder = new DatabaseSeeder(dbContext, userManager, seederLogger);
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding demo data.");
+    }
 }
 
 // Configure error handling
@@ -162,13 +263,64 @@ if (!app.Environment.IsDevelopment())
 else
 {
     app.UseDeveloperExceptionPage();
+    
+    // Swagger UI only in development
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Universal Reservation API v1");
+        c.RoutePrefix = "swagger";
+    });
 }
+
+// Serilog request logging
+app.UseSerilogRequestLogging();
+
+// Security Headers
+app.Use(async (context, next) =>
+{
+    // Prevent MIME type sniffing
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    
+    // Prevent clickjacking
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    
+    // XSS Protection
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    
+    // Referrer Policy
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    // Permissions Policy
+    context.Response.Headers.Append("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    
+    // Content Security Policy
+    if (!context.Request.Path.StartsWithSegments("/swagger"))
+    {
+        context.Response.Headers.Append("Content-Security-Policy", 
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com; " +
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
+            "img-src 'self' data: https:; " +
+            "connect-src 'self' https://*.stripe.com wss://localhost:*; " +
+            "frame-src https://js.stripe.com;");
+    }
+    
+    await next();
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// Response caching
+app.UseResponseCaching();
+
 // Localization middleware
 app.UseRequestLocalization();
+
+// Rate limiting middleware
+app.UseIpRateLimiting();
 
 app.UseRouting();
 
@@ -184,4 +336,16 @@ app.MapControllerRoute(
 // SignalR hubs
 app.MapHub<UniversalReservationMVC.Hubs.SeatHub>("/hubs/seat");
 
-app.Run();
+try
+{
+    Log.Information("Starting web application");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
