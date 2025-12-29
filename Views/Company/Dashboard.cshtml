@@ -141,6 +141,50 @@
         </div>
     </div>
 
+    <!-- Export Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-download me-2"></i>Eksport Raportów</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="exportForm" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Data od:</label>
+                                <input type="date" name="startDate" class="form-control" value="@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Data do:</label>
+                                <input type="date" name="endDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-danger" onclick="exportReport('pdf')">
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="exportReport('excel')">
+                                        <i class="fas fa-file-excel me-1"></i>Excel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-danger" onclick="downloadFinancialPdf()">
+                            <i class="fas fa-chart-line me-1"></i>Raport Finansowy PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="downloadRevenueExcel()">
+                            <i class="fas fa-money-bill-wave me-1"></i>Przychody Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Ostatnie zasoby -->
     @if (Model.Resources != null && Model.Resources.Count > 0)
     {
@@ -197,6 +241,36 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function exportReport(type) {
+            const form = document.getElementById('exportForm');
+            const startDate = form.querySelector('[name="startDate"]').value;
+            const endDate = form.querySelector('[name="endDate"]').value;
+            
+            const action = type === 'pdf' 
+                ? '@Url.Action("ExportReservationsPdf", "Company")' 
+                : '@Url.Action("ExportReservationsExcel", "Company")';
+            
+            window.location.href = `${action}?startDate=${startDate}&endDate=${endDate}`;
+        }
+        
+        function downloadFinancialPdf() {
+            const form = document.getElementById('exportForm');
+            const startDate = form.querySelector('[name="startDate"]').value;
+            const endDate = form.querySelector('[name="endDate"]').value;
+            window.location.href = `@Url.Action("ExportFinancialSummaryPdf", "Company")?startDate=${startDate}&endDate=${endDate}`;
+        }
+        
+        function downloadRevenueExcel() {
+            const form = document.getElementById('exportForm');
+            const startDate = form.querySelector('[name="startDate"]').value;
+            const endDate = form.querySelector('[name="endDate"]').value;
+            window.location.href = `@Url.Action("ExportRevenueExcel", "Company")?startDate=${startDate}&endDate=${endDate}`;
+        }
+    </script>
+}
 
 <!-- Modal: Dodaj zasób (quick action) -->
 <div class="modal fade" id="createResourceModal" tabindex="-1">

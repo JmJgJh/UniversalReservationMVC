@@ -29,6 +29,16 @@ namespace UniversalReservationMVC.Services
             _logger.LogInformation("Creating reservation for resource {ResourceId}, seat {SeatId}", 
                 reservation.ResourceId, reservation.SeatId);
 
+            // Check working hours
+            var resource = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
+            if (resource != null && !string.IsNullOrEmpty(resource.WorkingHours))
+            {
+                if (!IsWithinWorkingHours(reservation.StartTime, reservation.EndTime, resource.WorkingHours))
+                {
+                    throw new InvalidOperationException("Rezerwacja znajduje się poza godzinami otwarcia zasobu.");
+                }
+            }
+
             if (reservation.SeatId.HasValue)
             {
                 bool available = await IsSeatAvailableAsync(
@@ -55,17 +65,17 @@ namespace UniversalReservationMVC.Services
             // Send confirmation email
             if (reservation.User != null)
             {
-                var resource = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
+                var resourceForEmail = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
                 var seat = reservation.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(reservation.SeatId.Value) : null;
                 var seatInfo = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : null;
-                var companyName = resource?.Company?.Name ?? "System Rezerwacji";
+                var companyName = resourceForEmail?.Company?.Name ?? "System Rezerwacji";
 
                 try
                 {
                     await _emailService.SendReservationConfirmationAsync(
                         reservation.User.Email ?? string.Empty,
                         reservation.User.FirstName ?? reservation.User.UserName ?? "Użytkownik",
-                        resource?.Name ?? "Zasób",
+                        resourceForEmail?.Name ?? "Zasób",
                         reservation.StartTime,
                         seatInfo,
                         companyName
@@ -285,6 +295,64 @@ namespace UniversalReservationMVC.Services
 
             var hasConflict = await _unitOfWork.Reservations.HasConflictAsync(resourceId, seatId, start, end, excludeReservationId);
             return !hasConflict;
+        }
+
+        private bool IsWithinWorkingHours(DateTime startTime, DateTime endTime, string workingHoursJson)
+        {
+            try
+            {
+                var config = System.Text.Json.JsonSerializer.Deserialize<WorkingHoursConfig>(workingHoursJson);
+                if (config == null || config.Hours.Count == 0)
+                {
+                    return true; // No working hours configured, allow all times
+                }
+
+                // Check if reservation spans multiple days
+                var currentDate = startTime.Date;
+                var endDate = endTime.Date;
+
+                while (currentDate <= endDate)
+                {
+                    var dayName = currentDate.DayOfWeek.ToString().ToLower();
+                    
+                    if (!config.Hours.TryGetValue(dayName, out var dayHours))
+                    {
+                        _logger.LogWarning("No working hours configured for {DayName}", dayName);
+                        return false; // Day not configured
+                    }
+
+                    if (dayHours.IsClosed)
+                    {
+                        _logger.LogWarning("Resource is closed on {DayName}", dayName);
+                        return false; // Resource is closed on this day
+                    }
+
+                    if (!string.IsNullOrEmpty(dayHours.Open) && !string.IsNullOrEmpty(dayHours.Close))
+                    {
+                        var openTime = TimeSpan.Parse(dayHours.Open);
+                        var closeTime = TimeSpan.Parse(dayHours.Close);
+
+                        var checkStart = currentDate == startTime.Date ? startTime.TimeOfDay : TimeSpan.Zero;
+                        var checkEnd = currentDate == endTime.Date ? endTime.TimeOfDay : new TimeSpan(23, 59, 59);
+
+                        if (checkStart < openTime || checkEnd > closeTime)
+                        {
+                            _logger.LogWarning("Reservation time {Start}-{End} outside working hours {Open}-{Close} on {Date}",
+                                checkStart, checkEnd, openTime, closeTime, currentDate);
+                            return false;
+                        }
+                    }
+
+                    currentDate = currentDate.AddDays(1);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parsing working hours JSON: {Json}", workingHoursJson);
+                return true; // If parsing fails, don't block reservation
+            }
         }
     }
 }

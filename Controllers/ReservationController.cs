@@ -69,6 +69,7 @@ namespace UniversalReservationMVC.Controllers
             ViewBag.ResourceName = resource.Name;
             ViewBag.SeatLabel = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : "Wybierz miejsce";
             ViewBag.Seats = seats.ToList();
+            ViewBag.ResourcePrice = resource.Price;
             
             return View(vm);
         }
@@ -84,6 +85,7 @@ namespace UniversalReservationMVC.Controllers
                 var seat = vm.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(vm.SeatId.Value) : null;
                 ViewBag.ResourceName = resource?.Name ?? "Zasób";
                 ViewBag.SeatLabel = seat?.Label ?? "Nieznane";
+                ViewBag.ResourcePrice = resource?.Price ?? 0;
                 return View(vm);
             }
 
@@ -136,6 +138,7 @@ namespace UniversalReservationMVC.Controllers
                 var seat = vm.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(vm.SeatId.Value) : null;
                 ViewBag.ResourceName = resource?.Name ?? "Zasób";
                 ViewBag.SeatLabel = seat?.Label ?? "Nieznane";
+                ViewBag.ResourcePrice = resource?.Price ?? 0;
                 return View(vm);
             }
         }

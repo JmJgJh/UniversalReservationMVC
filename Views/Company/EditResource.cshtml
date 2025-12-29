@@ -61,7 +61,63 @@
                             <label asp-for="Description" class="form-label">Opis (opcjonalnie)</label>
                             <textarea asp-for="Description" class="form-control" rows="3" placeholder="Opis zasobu i jego możliwości"></textarea>
                         </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Price" class="form-label">Cena (PLN)</label>
+                            <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                            <small class="text-muted">Cena za rezerwację zasobu (zostaw 0 dla darmowych rezerwacji)</small>
+                        </div>
 
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-clock me-1"></i>Godziny otwarcia</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">Ustaw godziny dostępności zasobu dla każdego dnia tygodnia. Pozostaw puste dla zasobów dostępnych 24/7.</p>
+                                
+                                @{
+                                    var days = new[] { 
+                                        ("monday", "Poniedziałek"), 
+                                        ("tuesday", "Wtorek"), 
+                                        ("wednesday", "Środa"), 
+                                        ("thursday", "Czwartek"), 
+                                        ("friday", "Piątek"), 
+                                        ("saturday", "Sobota"), 
+                                        ("sunday", "Niedziela") 
+                                    };
+                                }
+
+                                @foreach (var (day, label) in days)
+                                {
+                                    <div class="row mb-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label">@label</label>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="time" class="form-control form-control-sm" 
+                                                   name="WorkingHours[@day].Open" 
+                                                   placeholder="09:00" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="time" class="form-control form-control-sm" 
+                                                   name="WorkingHours[@day].Close" 
+                                                   placeholder="17:00" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       name="WorkingHours[@day].IsClosed" 
+                                                       id="closed_@day" />
+                                                <label class="form-check-label" for="closed_@day">Zamknięte</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Rezerwacje poza godzinami otwarcia będą odrzucane.
+                                </small>
+                            </div>
+                        </div>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">💾 Zapisz zmiany</button>
                             <a asp-action="Resources" class="btn btn-secondary">Anuluj</a>

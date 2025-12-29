@@ -37,6 +37,9 @@ namespace UniversalReservationMVC.Models
         [Range(0, 999999.99, ErrorMessage = "Cena musi być między 0 a 999999.99")]
         public decimal Price { get; set; } = 0;
 
+        // Working hours (JSON: {"monday": {"open": "09:00", "close": "17:00"}, ...})
+        public string? WorkingHours { get; set; }
+
         // Company association (resource belongs to a company owner)
         public int? CompanyId { get; set; }
 

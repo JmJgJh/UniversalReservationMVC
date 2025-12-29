@@ -68,16 +68,53 @@
                                 <span class="badge bg-primary">ID: @Model.EventId</span>
                             </p>
                         }
+                        @if (ViewBag.ResourcePrice != null && (decimal)ViewBag.ResourcePrice > 0)
+                        {
+                            <hr />
+                            <p class="mb-0">
+                                <strong><i class="fas fa-money-bill-wave me-1"></i>Cena:</strong> 
+                                <span class="h4 text-success">@((decimal)ViewBag.ResourcePrice) PLN</span>
+                            </p>
+                        }
                     </div>
                 </div>
+
+                @if (ViewBag.ResourcePrice != null && (decimal)ViewBag.ResourcePrice > 0)
+                {
+                    <div class="card shadow mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Płatność</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Po potwierdzeniu rezerwacji zostaniesz przekierowany do bezpiecznej płatności Stripe.
+                            </div>
+                            <div id="payment-element"></div>
+                            <p class="text-muted small mt-2 mb-0">
+                                <i class="fas fa-lock me-1"></i>
+                                Płatność jest obsługiwana przez Stripe - bezpieczny operator płatności.
+                            </p>
+                        </div>
+                    </div>
+                }
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <a href="@Url.Action("Details", "Resource", new { id = Model.ResourceId })" class="btn btn-secondary">
                         <i class="fas fa-times me-1"></i>Anuluj
                     </a>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check me-1"></i>Potwierdź rezerwację
-                    </button>
+                    @if (ViewBag.ResourcePrice != null && (decimal)ViewBag.ResourcePrice > 0)
+                    {
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-credit-card me-1"></i>Rezerwuj i zapłać
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Potwierdź rezerwację
+                        </button>
+                    }
                 </div>
             </form>
         </div>
