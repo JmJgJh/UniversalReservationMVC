@@ -34,8 +34,31 @@ namespace UniversalReservationMVC.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
-            var ev = await _db.Events.Include(e => e.Resource).FirstOrDefaultAsync(e => e.Id == id);
+            var ev = await _db.Events
+                .Include(e => e.Resource)
+                    .ThenInclude(r => r.Company)
+                .Include(e => e.RecurrencePattern)
+                .FirstOrDefaultAsync(e => e.Id == id);
+            
             if (ev == null) return NotFound();
+            
+            // Calculate available seats
+            var totalSeats = await _db.Seats
+                .Where(s => s.ResourceId == ev.ResourceId)
+                .CountAsync();
+            
+            var reservedSeats = await _db.Reservations
+                .Where(r => r.ResourceId == ev.ResourceId
+                           && r.Status == ReservationStatus.Confirmed
+                           && r.StartTime < ev.EndTime
+                           && r.EndTime > ev.StartTime
+                           && r.SeatId.HasValue)
+                .Select(r => r.SeatId)
+                .Distinct()
+                .CountAsync();
+            
+            ViewBag.TotalSeats = totalSeats;
+            ViewBag.AvailableSeats = totalSeats - reservedSeats;
             
             // Detect current user's reservation linked to this event or overlapping time window
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
