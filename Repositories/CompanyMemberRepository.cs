@@ -23,6 +23,14 @@ namespace UniversalReservationMVC.Repositories
                 .FirstOrDefaultAsync(cm => cm.CompanyId == companyId && cm.UserId == userId);
         }
 
+        public async Task<CompanyMember?> GetByIdWithIncludesAsync(int id)
+        {
+            return await _context.CompanyMembers
+                .Include(cm => cm.User)
+                .Include(cm => cm.Company)
+                .FirstOrDefaultAsync(cm => cm.Id == id);
+        }
+
         public async Task<List<CompanyMember>> GetUserCompaniesAsync(string userId)
         {
             return await _context.CompanyMembers

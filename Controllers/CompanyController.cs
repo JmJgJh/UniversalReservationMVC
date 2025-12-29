@@ -453,6 +453,79 @@ namespace UniversalReservationMVC.Controllers
             return RedirectToAction("Members");
         }
 
+        // Edit member permissions
+        [HttpGet]
+        public async Task<IActionResult> EditMemberPermissions(int id)
+        {
+            var ownerId = User.GetCurrentUserId();
+            if (ownerId == null)
+            {
+                return Forbid();
+            }
+
+            var member = await _unitOfWork.CompanyMembers
+                .GetByIdWithIncludesAsync(id);
+
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            var company = await _companyService.GetCompanyByOwnerAsync(ownerId);
+            if (company == null || company.Id != member.CompanyId)
+            {
+                return Forbid();
+            }
+
+            return View(member);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditMemberPermissions(
+            int id,
+            string role,
+            bool canManageResources,
+            bool canViewReservations,
+            bool canManageReservations,
+            bool canManageEvents,
+            bool canViewAnalytics,
+            bool canExportReports,
+            bool canManageMembers)
+        {
+            var ownerId = User.GetCurrentUserId();
+            if (ownerId == null)
+            {
+                return Forbid();
+            }
+
+            var member = await _unitOfWork.CompanyMembers.GetByIdAsync(id);
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            var company = await _companyService.GetCompanyByOwnerAsync(ownerId);
+            if (company == null || company.Id != member.CompanyId)
+            {
+                return Forbid();
+            }
+
+            member.Role = role;
+            member.CanManageResources = canManageResources;
+            member.CanViewReservations = canViewReservations;
+            member.CanManageReservations = canManageReservations;
+            member.CanManageEvents = canManageEvents;
+            member.CanViewAnalytics = canViewAnalytics;
+            member.CanExportReports = canExportReports;
+            member.CanManageMembers = canManageMembers;
+
+            await _unitOfWork.SaveAsync();
+
+            TempData["Success"] = "Uprawnienia zostały zaktualizowane";
+            return RedirectToAction("Members");
+        }
+
         // API endpoint to save/update seat map
         [HttpPost]
         [ValidateAntiForgeryToken]

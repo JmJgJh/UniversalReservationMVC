@@ -46,6 +46,26 @@ namespace UniversalReservationMVC.Models
         public bool CanManageReservations { get; set; } = false;
 
         /// <summary>
+        /// Czy użytkownik ma dostęp do zarządzania wydarzeniami
+        /// </summary>
+        public bool CanManageEvents { get; set; } = false;
+
+        /// <summary>
+        /// Czy użytkownik ma dostęp do analityki
+        /// </summary>
+        public bool CanViewAnalytics { get; set; } = false;
+
+        /// <summary>
+        /// Czy użytkownik ma dostęp do eksportu raportów
+        /// </summary>
+        public bool CanExportReports { get; set; } = false;
+
+        /// <summary>
+        /// Czy użytkownik ma dostęp do zarządzania członkami
+        /// </summary>
+        public bool CanManageMembers { get; set; } = false;
+
+        /// <summary>
         /// Data dołączenia do firmy
         /// </summary>
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;

@@ -78,29 +78,125 @@
                                 <th>Użytkownik</th>
                                 <th>Email</th>
                                 <th>Rola</th>
-                                <th>Zasoby</th>
-                                <th>Rezerwacje</th>
+                                <th>Uprawnienia</th>
                                 <th>Dołączył</th>
-                                <th></th>
+                                <th>Status</th>
+                                <th>Akcje</th>
                             </tr>
                         </thead>
                         <tbody>
                         @foreach (var m in Model)
                         {
                             <tr>
-                                <td>@(m.User?.FirstName) @(m.User?.LastName)</td>
+                                <td>
+                                    <strong>@(m.User?.FirstName) @(m.User?.LastName)</strong>
+                                    @if (m.User?.Email == User.Identity.Name)
+                                    {
+                                        <span class="badge bg-info">Ty</span>
+                                    }
+                                </td>
                                 <td>@m.User?.Email</td>
-                                <td><span class="badge bg-secondary">@m.Role</span></td>
-                                <td>@(m.CanManageResources ? "✅" : "—")</td>
-                                <td>@(m.CanManageReservations ? "✅" : "—")</td>
-                                <td>@m.JoinedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    @if (m.Role == "Manager")
+                                    {
+                                        <span class="badge bg-success"><i class="fas fa-user-tie"></i> Manager</span>
+                                    }
+                                    else if (m.Role == "Employee")
+                                    {
+                                        <span class="badge bg-primary"><i class="fas fa-user"></i> Pracownik</span>
+                                    }
+                                    else if (m.Role == "Viewer")
+                                    {
+                                        <span class="badge bg-secondary"><i class="fas fa-eye"></i> Widz</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@m.Role</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @if (m.CanManageResources)
+                                        {
+                                            <span class="badge bg-primary" title="Zarządzanie zasobami">
+                                                <i class="fas fa-door-open"></i> Zasoby
+                                            </span>
+                                        }
+                                        @if (m.CanViewReservations)
+                                        {
+                                            <span class="badge bg-info" title="Przeglądanie rezerwacji">
+                                                <i class="fas fa-eye"></i> Widok
+                                            </span>
+                                        }
+                                        @if (m.CanManageReservations)
+                                        {
+                                            <span class="badge bg-warning text-dark" title="Zarządzanie rezerwacjami">
+                                                <i class="fas fa-bookmark"></i> Rezerwacje
+                                            </span>
+                                        }
+                                        @if (m.CanManageEvents)
+                                        {
+                                            <span class="badge bg-success" title="Zarządzanie wydarzeniami">
+                                                <i class="fas fa-calendar-alt"></i> Wydarzenia
+                                            </span>
+                                        }
+                                        @if (m.CanViewAnalytics)
+                                        {
+                                            <span class="badge bg-secondary" title="Dostęp do analityki">
+                                                <i class="fas fa-chart-line"></i> Analityka
+                                            </span>
+                                        }
+                                        @if (m.CanExportReports)
+                                        {
+                                            <span class="badge bg-dark" title="Eksport raportów">
+                                                <i class="fas fa-file-export"></i> Raporty
+                                            </span>
+                                        }
+                                        @if (m.CanManageMembers)
+                                        {
+                                            <span class="badge bg-danger" title="Zarządzanie członkami">
+                                                <i class="fas fa-users"></i> Członkowie
+                                            </span>
+                                        }
+                                        @if (!m.CanManageResources && !m.CanViewReservations && !m.CanManageReservations && 
+                                             !m.CanManageEvents && !m.CanViewAnalytics && !m.CanExportReports && !m.CanManageMembers)
+                                        {
+                                            <span class="text-muted"><i class="fas fa-minus"></i> Brak</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>@m.JoinedAt.ToLocalTime().ToString("dd.MM.yyyy")</small>
+                                </td>
+                                <td>
+                                    @if (m.IsActive)
+                                    {
+                                        <span class="badge bg-success">Aktywny</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Nieaktywny</span>
+                                    }
+                                </td>
                                 <td class="text-end">
-                                    <form method="post" asp-action="RemoveMember" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="companyId" value="@m.CompanyId" />
-                                        <input type="hidden" name="userId" value="@m.UserId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Usunąć użytkownika?');">Usuń</button>
-                                    </form>
+                                    <div class="btn-group" role="group">
+                                        <a href="@Url.Action("EditMemberPermissions", new { id = m.Id })" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="Edytuj uprawnienia">
+                                            <i class="fas fa-user-shield"></i>
+                                        </a>
+                                        <form method="post" asp-action="RemoveMember" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="companyId" value="@m.CompanyId" />
+                                            <input type="hidden" name="userId" value="@m.UserId" />
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Usunąć użytkownika z firmy?');"
+                                                    title="Usuń z firmy">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         }
