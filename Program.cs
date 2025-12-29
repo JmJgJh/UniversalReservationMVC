@@ -42,6 +42,9 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 // Report service
 builder.Services.AddScoped<IReportService, ReportService>();
 
+// Analytics service
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
 // Application services
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<ISeatMapService, SeatMapService>();

@@ -19,6 +19,7 @@ namespace UniversalReservationMVC.Controllers
         private readonly ILogger<CompanyController> _logger;
         private readonly IEmailService _emailService;
         private readonly IReportService _reportService;
+        private readonly IAnalyticsService _analyticsService;
 
         public CompanyController(
             ICompanyService companyService,
@@ -27,7 +28,8 @@ namespace UniversalReservationMVC.Controllers
             IUnitOfWork unitOfWork,
             ILogger<CompanyController> logger,
             IEmailService emailService,
-            IReportService reportService)
+            IReportService reportService,
+            IAnalyticsService analyticsService)
         {
             _companyService = companyService;
             _seatMapService = seatMapService;
@@ -36,6 +38,7 @@ namespace UniversalReservationMVC.Controllers
             _logger = logger;
             _emailService = emailService;
             _reportService = reportService;
+            _analyticsService = analyticsService;
         }
 
         // Dashboard - main company panel
@@ -985,6 +988,25 @@ namespace UniversalReservationMVC.Controllers
             return File(excel,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Raport_Przychodow_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        // Analytics Dashboard
+        [HttpGet]
+        public async Task<IActionResult> Analytics(DateTime? startDate, DateTime? endDate)
+        {
+            var userId = User.GetCurrentUserId();
+            if (userId == null) return Forbid();
+
+            var company = await _companyService.GetCompanyByOwnerAsync(userId);
+            if (company == null) return NotFound();
+
+            var start = startDate ?? DateTime.UtcNow.AddMonths(-1);
+            var end = endDate ?? DateTime.UtcNow;
+
+            var analytics = await _analyticsService.GetCompanyAnalyticsAsync(company.Id, start, end);
+            ViewBag.CompanyName = company.Name;
+
+            return View(analytics);
         }
     }
 
