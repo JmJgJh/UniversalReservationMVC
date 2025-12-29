@@ -10,12 +10,20 @@ namespace UniversalReservationMVC.Controllers
     public class EventController : Controller
     {
         private readonly IEventService _eventService;
+        private readonly IRecurrenceService _recurrenceService;
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<EventController> _logger;
 
-        public EventController(IEventService eventService, ApplicationDbContext db)
+        public EventController(
+            IEventService eventService, 
+            IRecurrenceService recurrenceService,
+            ApplicationDbContext db,
+            ILogger<EventController> logger)
         {
             _eventService = eventService;
+            _recurrenceService = recurrenceService;
             _db = db;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -68,13 +76,62 @@ namespace UniversalReservationMVC.Controllers
         [Authorize(Roles = "Admin,Owner")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Event model)
+        public async Task<IActionResult> Create(
+            Event model, 
+            int RecurrenceType, 
+            int? RecurrenceInterval, 
+            List<int>? DaysOfWeek,
+            int? DayOfMonth,
+            DateTime? RecurrenceEndDate,
+            int? MaxOccurrences)
         {
             if (ModelState.IsValid)
             {
-                var ev = await _eventService.CreateEventAsync(model);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var ev = await _eventService.CreateEventAsync(model);
+
+                    // If recurrence pattern is specified, create it
+                    if (RecurrenceType > 0 && ev != null)
+                    {
+                        var pattern = new RecurrencePattern
+                        {
+                            EventId = ev.Id,
+                            Type = (RecurrenceType)RecurrenceType,
+                            Interval = RecurrenceInterval ?? 1,
+                            DaysOfWeek = DaysOfWeek != null && DaysOfWeek.Any() 
+                                ? System.Text.Json.JsonSerializer.Serialize(DaysOfWeek) 
+                                : null,
+                            DayOfMonth = DayOfMonth,
+                            EndDate = RecurrenceEndDate,
+                            MaxOccurrences = MaxOccurrences
+                        };
+
+                        _db.RecurrencePatterns.Add(pattern);
+                        await _db.SaveChangesAsync();
+
+                        // Generate occurrences (save to DB or generate on-the-fly)
+                        var occurrences = await _recurrenceService.GenerateOccurrencesAsync(ev, pattern);
+                        _db.Events.AddRange(occurrences);
+                        await _db.SaveChangesAsync();
+
+                        _logger.LogInformation("Created recurring event {EventId} with {Count} occurrences", 
+                            ev.Id, occurrences.Count);
+                    }
+
+                    TempData["SuccessMessage"] = RecurrenceType > 0 
+                        ? "Wydarzenie cykliczne zostało utworzone!" 
+                        : "Wydarzenie zostało utworzone!";
+                    
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating event with recurrence");
+                    ModelState.AddModelError("", "Wystąpił błąd podczas tworzenia wydarzenia");
+                }
             }
+            
             ViewBag.Resources = _db.Resources.ToList();
             return View(model);
         }

@@ -62,6 +62,9 @@ builder.Services.AddScoped<IReportService, ReportService>();
 // Analytics service
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
+// Recurrence service
+builder.Services.AddScoped<IRecurrenceService, RecurrenceService>();
+
 // Application services
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<ISeatMapService, SeatMapService>();

@@ -22,5 +22,15 @@ namespace UniversalReservationMVC.Models
         
         [Required]
         public DateTime EndTime { get; set; }
+
+        /// <summary>
+        /// Optional recurrence pattern for repeating events
+        /// </summary>
+        public RecurrencePattern? RecurrencePattern { get; set; }
+
+        /// <summary>
+        /// If this event is part of a recurring series, this is the parent event ID
+        /// </summary>
+        public int? ParentEventId { get; set; }
     }
 }

@@ -44,6 +44,106 @@
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 
+    <!-- Recurrence Settings -->
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-redo me-2"></i>Ustawienia powtarzania</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Typ powtarzania</label>
+                <select id="recurrenceType" name="RecurrenceType" class="form-select">
+                    <option value="0">Brak - jednorazowe wydarzenie</option>
+                    <option value="1">Codziennie</option>
+                    <option value="2">Co tydzień</option>
+                    <option value="3">Co miesiąc</option>
+                </select>
+            </div>
+
+            <div id="recurrenceOptions" style="display: none;">
+                <div class="mb-3">
+                    <label for="recurrenceInterval" class="form-label">Interwał</label>
+                    <input type="number" id="recurrenceInterval" name="RecurrenceInterval" class="form-control" value="1" min="1" max="365" />
+                    <small class="text-muted">Co ile dni/tygodni/miesięcy powtarzać</small>
+                </div>
+
+                <div id="daysOfWeekSection" class="mb-3" style="display: none;">
+                    <label class="form-label">Dni tygodnia</label>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="dayMon" name="DaysOfWeek">
+                            <label class="form-check-label" for="dayMon">Poniedziałek</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="2" id="dayTue" name="DaysOfWeek">
+                            <label class="form-check-label" for="dayTue">Wtorek</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="3" id="dayWed" name="DaysOfWeek">
+                            <label class="form-check-label" for="dayWed">Środa</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="4" id="dayThu" name="DaysOfWeek">
+                            <label class="form-check-label" for="dayThu">Czwartek</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="5" id="dayFri" name="DaysOfWeek">
+                            <label class="form-check-label" for="dayFri">Piątek</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="6" id="daySat" name="DaysOfWeek">
+                            <label class="form-check-label" for="daySat">Sobota</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="0" id="daySun" name="DaysOfWeek">
+                            <label class="form-check-label" for="daySun">Niedziela</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dayOfMonthSection" class="mb-3" style="display: none;">
+                    <label for="dayOfMonth" class="form-label">Dzień miesiąca</label>
+                    <input type="number" id="dayOfMonth" name="DayOfMonth" class="form-control" min="1" max="31" />
+                    <small class="text-muted">Pozostaw puste aby użyć dnia z daty początku</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="recurrenceEndDate" class="form-label">Data zakończenia</label>
+                        <input type="date" id="recurrenceEndDate" name="RecurrenceEndDate" class="form-control" />
+                        <small class="text-muted">Opcjonalne - zostaw puste dla nieograniczonego</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="maxOccurrences" class="form-label">Maksymalna liczba wystąpień</label>
+                        <input type="number" id="maxOccurrences" name="MaxOccurrences" class="form-control" min="1" max="365" />
+                        <small class="text-muted">Opcjonalne</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <button type="submit" class="btn btn-primary">Utwórz</button>
     <a href="@Url.Action("Index", "Event")" class="btn btn-secondary">Anuluj</a>
 </form>
+
+@section Scripts {
+    <script>
+        document.getElementById('recurrenceType').addEventListener('change', function() {
+            const type = parseInt(this.value);
+            const optionsDiv = document.getElementById('recurrenceOptions');
+            const daysOfWeekSection = document.getElementById('daysOfWeekSection');
+            const dayOfMonthSection = document.getElementById('dayOfMonthSection');
+
+            if (type === 0) {
+                optionsDiv.style.display = 'none';
+            } else {
+                optionsDiv.style.display = 'block';
+            }
+
+            // Show/hide day-specific options
+            daysOfWeekSection.style.display = type === 2 ? 'block' : 'none'; // Weekly
+            dayOfMonthSection.style.display = type === 3 ? 'block' : 'none'; // Monthly
+        });
+    </script>
+}
