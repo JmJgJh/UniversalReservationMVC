@@ -16,6 +16,11 @@ namespace UniversalReservationMVC.ViewModels
         public int ResourceId { get; set; }
 
         public int? SeatId { get; set; }
+        
+        public int? EventId { get; set; }
+        
+        /// <summary>URL, na który powrócić po rezerwacji (np. strona partnera).</summary>
+        public string? ReturnUrl { get; set; }
 
         [Required(ErrorMessage = "Data rozpoczęcia jest wymagana")]
         [Display(Name = "Data rozpoczęcia")]

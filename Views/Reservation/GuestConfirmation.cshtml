@@ -2,6 +2,7 @@
     ViewData["Title"] = "Potwierdzenie rezerwacji";
     var email = ViewBag.Email as string;
     var reservationId = ViewBag.ReservationId as int?;
+    var returnUrl = ViewBag.ReturnUrl as string;
 }
 
 <div class="container mt-4">
@@ -70,12 +71,24 @@
                     </div>
 
                     <div class="d-grid gap-2">
-                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg">
-                            Wróć do strony głównej
-                        </a>
-                        <a href="@Url.Action("Index", "Resource")" class="btn btn-outline-primary">
-                            Przeglądaj inne zasoby
-                        </a>
+                        @if (!string.IsNullOrEmpty(returnUrl))
+                        {
+                            <a href="@returnUrl" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-return-left"></i> Powrót do strony partnera
+                            </a>
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">
+                                Strona główna rezerwacji
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg">
+                                Wróć do strony głównej
+                            </a>
+                            <a href="@Url.Action("Index", "Resource")" class="btn btn-outline-primary">
+                                Przeglądaj inne zasoby
+                            </a>
+                        }
                     </div>
                 </div>
             </div>

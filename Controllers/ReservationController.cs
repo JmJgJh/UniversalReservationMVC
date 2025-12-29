@@ -38,7 +38,7 @@ namespace UniversalReservationMVC.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> Create(int resourceId, int? seatId, int? eventId)
+        public async Task<IActionResult> Create(int resourceId, int? seatId, int? eventId, string? returnUrl = null)
         {
             var resource = await _unitOfWork.Resources.GetByIdAsync(resourceId);
             if (resource == null) return NotFound();
@@ -51,6 +51,7 @@ namespace UniversalReservationMVC.Controllers
                 ResourceId = resourceId, 
                 SeatId = seatId,
                 EventId = eventId,
+                ReturnUrl = returnUrl,
                 StartTime = DateTime.Now.AddHours(1), 
                 EndTime = DateTime.Now.AddHours(2) 
             };
@@ -128,6 +129,13 @@ namespace UniversalReservationMVC.Controllers
                 await _reservationService.CreateReservationAsync(reservation);
                 _logger.LogInformation("User {UserId} created reservation {ReservationId}", userId, reservation.Id);
                 TempData["SuccessMessage"] = "Rezerwacja została utworzona pomyślnie.";
+                
+                // Jeśli podany returnUrl, przejdź tam, inaczej na MyReservations
+                if (!string.IsNullOrEmpty(vm.ReturnUrl) && IsValidReturnUrl(vm.ReturnUrl))
+                {
+                    return Redirect(vm.ReturnUrl);
+                }
+                
                 return RedirectToAction("MyReservations");
             }
             catch (Exception ex)
@@ -224,17 +232,27 @@ namespace UniversalReservationMVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GuestCreate(int resourceId, int? seatId)
+        public async Task<IActionResult> GuestCreate(int resourceId, int? seatId, int? eventId, string? returnUrl = null)
         {
             var resource = await _unitOfWork.Resources.GetByIdAsync(resourceId);
             if (resource == null) return NotFound();
+
+            // Jeśli user jest zalogowany, prześlij do Create (uwierzytelnionego)
+            var userId = User.GetCurrentUserId();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var url = Url.Action("Create", "Reservation", new { resourceId, seatId, eventId, returnUrl });
+                return RedirectToAction("Create", new { resourceId, seatId, eventId, returnUrl });
+            }
 
             var seat = seatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(seatId.Value) : null;
             
             var vm = new GuestReservationViewModel 
             { 
                 ResourceId = resourceId, 
-                SeatId = seatId, 
+                SeatId = seatId,
+                EventId = eventId,
+                ReturnUrl = returnUrl,
                 StartTime = DateTime.Now.AddHours(1), 
                 EndTime = DateTime.Now.AddHours(2) 
             };
@@ -267,7 +285,8 @@ namespace UniversalReservationMVC.Controllers
                 StartTime = vm.StartTime,
                 EndTime = vm.EndTime,
                 Status = ReservationStatus.Pending,
-                UserId = null
+                UserId = null,
+                EventId = vm.EventId
             };
             
             try
@@ -279,6 +298,7 @@ namespace UniversalReservationMVC.Controllers
                 TempData["ReservationConfirmed"] = true;
                 TempData["GuestEmail"] = vm.Email;
                 TempData["ReservationId"] = reservation.Id;
+                TempData["ReturnUrl"] = vm.ReturnUrl;
                 
                 return RedirectToAction("GuestConfirmation");
             }
@@ -299,6 +319,7 @@ namespace UniversalReservationMVC.Controllers
         {
             var email = TempData["GuestEmail"] as string;
             var reservationId = TempData["ReservationId"] as int?;
+            var returnUrl = TempData["ReturnUrl"] as string;
             
             if (string.IsNullOrEmpty(email) || !reservationId.HasValue)
             {
@@ -307,6 +328,7 @@ namespace UniversalReservationMVC.Controllers
 
             ViewBag.Email = email;
             ViewBag.ReservationId = reservationId;
+            ViewBag.ReturnUrl = returnUrl;
             
             return View();
         }
@@ -374,5 +396,20 @@ namespace UniversalReservationMVC.Controllers
                 return Json(new { reservedSeatIds = new List<int>() });
             }
         }
-    }
+
+        /// <summary>Sprawdza czy URL jest bezpiecznym adresem zwrotnym (HTTPS lub localhost). Waliduje format URI.</summary>
+        private bool IsValidReturnUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return false;
+
+            // Waliduj aby był absolute URL
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return false;
+
+            // Pozwól tylko na HTTPS i localhost (do testowania)
+            return uri.Scheme == Uri.UriSchemeHttps || 
+                   uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                   uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+        }    }
 }

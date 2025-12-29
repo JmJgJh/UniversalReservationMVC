@@ -9,290 +9,373 @@
     var availableSeats = ViewBag.AvailableSeats ?? 0;
     var totalSeats = ViewBag.TotalSeats ?? 0;
     var occupancyPercent = totalSeats > 0 ? (int)((totalSeats - availableSeats) * 100.0 / totalSeats) : 0;
+    var shortDescription = string.IsNullOrWhiteSpace(Model.Description)
+        ? "Brak dodatkowego opisu wydarzenia."
+        : (Model.Description.Length > 180 ? Model.Description[..180] + "..." : Model.Description);
 }
 
-<!-- Hero Section -->
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")"><i class="fas fa-home"></i> Start</a></li>
-                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Event")"><i class="fas fa-calendar"></i> Wydarzenia</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
+<div class="container py-4">
+        <nav aria-label="breadcrumb" class="breadcrumb-soft mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")"><i class="fas fa-home"></i> Start</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Event")"><i class="fas fa-calendar"></i> Wydarzenia</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <!-- Main Event Card -->
-            <div class="card shadow-lg mb-4">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h1 class="h3 mb-0"><i class="fas fa-calendar-star me-2"></i>@Model.Title</h1>
+        <div class="event-hero gradient-hero rounded-4 p-4 p-lg-5 mb-4 text-white shadow-lg">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
                         @if (isOngoing)
                         {
-                            <span class="badge bg-success fs-6"><i class="fas fa-broadcast-tower"></i> LIVE</span>
+                            <span class="badge bg-success"><i class="fas fa-broadcast-tower me-1"></i> LIVE</span>
                         }
                         else if (isUpcoming)
                         {
-                            <span class="badge bg-warning text-dark fs-6"><i class="fas fa-clock"></i> Nadchodzi</span>
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Nadchodzi</span>
                         }
                         else
                         {
-                            <span class="badge bg-secondary fs-6"><i class="fas fa-check"></i> Zakończone</span>
+                            <span class="badge bg-secondary"><i class="fas fa-check me-1"></i> Zakończone</span>
+                        }
+                        <span class="badge bg-light text-dark"><i class="fas fa-door-open me-1"></i>@(Model.Resource?.Name ?? "Zasób")</span>
+                    </div>
+                    <h1 class="display-5 fw-bold mb-3">@Model.Title</h1>
+                    <p class="lead text-white-75 mb-4">@shortDescription</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.ResourceId })" class="btn btn-light text-dark shadow-sm"><i class="fas fa-chair me-1"></i>Wybierz miejsce</a>
+                        <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-user-check me-1"></i>Zarezerwuj (logowanie)</a>
+                        <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-user me-1"></i>Gość</a>
+                        <a href="@Url.Action("GetSeatMap", "Seat", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-map me-1"></i>Mapa miejsc</a>
+                        @if (ViewBag.UserReservationId != null)
+                        {
+                            <a href="@Url.Action("Buy", "Ticket", new { reservationId = ViewBag.UserReservationId })" class="btn btn-outline-light"><i class="fas fa-ticket-alt me-1"></i>Kup bilet</a>
                         }
                     </div>
                 </div>
-                <div class="card-body">
-                    <!-- Countdown Timer -->
-                    @if (isUpcoming)
-                    {
-                        <div class="alert alert-info text-center mb-4">
-                            <h4><i class="fas fa-hourglass-half"></i> Wydarzenie rozpocznie się za:</h4>
-                            <div class="row mt-3">
-                                <div class="col-3">
-                                    <div class="display-4 fw-bold" id="countdown-days">0</div>
-                                    <div class="text-muted">Dni</div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="display-4 fw-bold" id="countdown-hours">0</div>
-                                    <div class="text-muted">Godzin</div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="display-4 fw-bold" id="countdown-minutes">0</div>
-                                    <div class="text-muted">Minut</div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="display-4 fw-bold" id="countdown-seconds">0</div>
-                                    <div class="text-muted">Sekund</div>
-                                </div>
+                <div class="col-lg-5">
+                    <div class="glass-card h-100 p-4 text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <div class="text-white-75 small">Dostępne miejsca</div>
+                                <div class="display-5 fw-bold">@availableSeats</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-white-75 small">Zajętość</div>
+                                <div class="h4 mb-0">@occupancyPercent%</div>
                             </div>
                         </div>
-                    }
+                        <div class="progress progress-soft mb-3" style="height: 18px;">
+                            <div class="progress-bar @(occupancyPercent > 80 ? "bg-danger" : occupancyPercent > 50 ? "bg-warning" : "bg-success")" style="width: @(occupancyPercent)%"></div>
+                        </div>
+                        <div class="row g-3 text-white-75">
+                            <div class="col-6">
+                                <div class="fw-semibold text-white">Start</div>
+                                <div>@Model.StartTime.ToString("dd.MM.yyyy HH:mm")</div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <div class="fw-semibold text-white">Koniec</div>
+                                <div>@Model.EndTime.ToString("dd.MM.yyyy HH:mm")</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="fw-semibold text-white">Czas trwania</div>
+                                <div>@((Model.EndTime - Model.StartTime).TotalHours.ToString("0.#")) godz.</div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <div class="fw-semibold text-white">Miejsc łącznie</div>
+                                <div>@totalSeats</div>
+                            </div>
+                        </div>
 
-                    <!-- Event Details -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="border-start border-primary border-4 ps-3">
-                                <h6 class="text-muted mb-1"><i class="fas fa-clock"></i> Data rozpoczęcia</h6>
-                                <p class="h5 mb-0">@Model.StartTime.ToString("dd.MM.yyyy HH:mm")</p>
+                        @if (isUpcoming)
+                        {
+                            <hr class="border-light opacity-25 mt-4 mb-3" />
+                            <div class="row text-center g-3">
+                                <div class="col-3">
+                                    <div class="fw-bold fs-4" id="countdown-days">0</div>
+                                    <div class="text-white-75 small">Dni</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="fw-bold fs-4" id="countdown-hours">0</div>
+                                    <div class="text-white-75 small">Godz.</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="fw-bold fs-4" id="countdown-minutes">0</div>
+                                    <div class="text-white-75 small">Min.</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="fw-bold fs-4" id="countdown-seconds">0</div>
+                                    <div class="text-white-75 small">Sek.</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border-start border-danger border-4 ps-3">
-                                <h6 class="text-muted mb-1"><i class="fas fa-flag-checkered"></i> Data zakończenia</h6>
-                                <p class="h5 mb-0">@Model.EndTime.ToString("dd.MM.yyyy HH:mm")</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border-start border-success border-4 ps-3">
-                                <h6 class="text-muted mb-1"><i class="fas fa-door-open"></i> Zasób</h6>
-                                <p class="h5 mb-0">@Model.Resource?.Name</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border-start border-warning border-4 ps-3">
-                                <h6 class="text-muted mb-1"><i class="fas fa-hourglass"></i> Czas trwania</h6>
-                                <p class="h5 mb-0">@((Model.EndTime - Model.StartTime).TotalHours.ToString("0.#")) godz.</p>
-                            </div>
-                        </div>
+                        }
                     </div>
-
-                    @if (!string.IsNullOrEmpty(Model.Description))
-                    {
-                        <div class="mb-4">
-                            <h5><i class="fas fa-info-circle text-primary"></i> Opis wydarzenia</h5>
-                            <p class="text-muted">@Model.Description</p>
-                        </div>
-                    }
-
-                    @if (Model.RecurrencePattern != null)
-                    {
-                        <div class="alert alert-secondary">
-                            <h6><i class="fas fa-repeat"></i> To jest wydarzenie cykliczne</h6>
-                            <p class="mb-0">Typ: <strong>@Model.RecurrencePattern.Type</strong>, Interwał: <strong>@Model.RecurrencePattern.Interval</strong></p>
-                        </div>
-                    }
                 </div>
             </div>
-
-            <!-- Description and Details -->
-            @if (!string.IsNullOrEmpty(Model.Description))
-            {
-                <div class="card shadow mb-4">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> Szczegółowy opis</h5>
-                    </div>
-                    <div class="card-body">
-                        <p style="white-space: pre-line;">@Model.Description</p>
-                    </div>
-                </div>
-            }
         </div>
 
-        <div class="col-lg-4">
-            <!-- Availability Card -->
-            <div class="card shadow mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-chair"></i> Dostępność miejsc</h5>
-                </div>
-                <div class="card-body text-center">
-                    <div class="display-3 fw-bold text-success">@availableSeats</div>
-                    <p class="text-muted mb-3">z @totalSeats miejsc dostępnych</p>
-                    <div class="progress" style="height: 30px;">
-                        <div class="progress-bar @(occupancyPercent > 80 ? "bg-danger" : occupancyPercent > 50 ? "bg-warning" : "bg-success")" 
-                             role="progressbar" 
-                             style="width: @(occupancyPercent)%" 
-                             aria-valuenow="@occupancyPercent" 
-                             aria-valuemin="0" 
-                             aria-valuemax="100">
-                            @occupancyPercent% zapełnienia
-                        </div>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Szczegóły wydarzenia</h5>
+                        @if (Model.RecurrencePattern != null)
+                        {
+                            <span class="badge bg-secondary"><i class="fas fa-repeat me-1"></i> Wydarzenie cykliczne</span>
+                        }
                     </div>
-                    @if (availableSeats == 0)
-                    {
-                        <div class="alert alert-danger mt-3 mb-0">
-                            <i class="fas fa-exclamation-triangle"></i> Brak wolnych miejsc
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="info-tile">
+                                    <div class="info-label"><i class="fas fa-clock me-2"></i>Data rozpoczęcia</div>
+                                    <div class="info-value">@Model.StartTime.ToString("dd.MM.yyyy HH:mm")</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-tile">
+                                    <div class="info-label"><i class="fas fa-flag-checkered me-2"></i>Data zakończenia</div>
+                                    <div class="info-value">@Model.EndTime.ToString("dd.MM.yyyy HH:mm")</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-tile">
+                                    <div class="info-label"><i class="fas fa-door-open me-2"></i>Zasób</div>
+                                    <div class="info-value">@Model.Resource?.Name</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-tile">
+                                    <div class="info-label"><i class="fas fa-hourglass me-2"></i>Czas trwania</div>
+                                    <div class="info-value">@((Model.EndTime - Model.StartTime).TotalHours.ToString("0.#")) godz.</div>
+                                </div>
+                            </div>
+                            @if (Model.RecurrencePattern != null)
+                            {
+                                <div class="col-12">
+                                    <div class="info-tile">
+                                        <div class="info-label"><i class="fas fa-repeat me-2"></i>Cykl</div>
+                                        <div class="info-value">Typ: <strong>@Model.RecurrencePattern.Type</strong>, Interwał: <strong>@Model.RecurrencePattern.Interval</strong></div>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                    }
-                    else if (availableSeats < 10)
-                    {
-                        <div class="alert alert-warning mt-3 mb-0">
-                            <i class="fas fa-exclamation-circle"></i> Tylko @availableSeats miejsc!
-                        </div>
-                    }
+
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <hr class="my-4" />
+                            <h6 class="text-muted"><i class="fas fa-file-alt me-2"></i>Opis wydarzenia</h6>
+                            <p class="mb-0 text-muted" style="white-space: pre-line;">@Model.Description</p>
+                        }
+                    </div>
                 </div>
             </div>
 
-            <!-- Organizer Card -->
-            @if (Model.Resource?.Company != null)
-            {
-                <div class="card shadow mb-4">
-                    <div class="card-header" style="background-color: @(Model.Resource.Company.PrimaryColor ?? "#6c757d"); color: white;">
-                        <h5 class="mb-0"><i class="fas fa-building"></i> Organizator</h5>
+            <div class="col-lg-4">
+                @if (Model.Resource?.Company != null)
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header text-white" style="background-color: @(Model.Resource.Company.PrimaryColor ?? "#6c757d");">
+                            <h5 class="mb-0"><i class="fas fa-building"></i> Organizator</h5>
+                        </div>
+                        <div class="card-body">
+                            <h4 class="mb-2">@Model.Resource.Company.Name</h4>
+                            @if (!string.IsNullOrEmpty(Model.Resource.Company.Description))
+                            {
+                                <p class="text-muted">@Model.Resource.Company.Description</p>
+                            }
+                            <a href="@Url.Action("Details", "Company", new { id = Model.Resource.Company.Id })" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-info-circle me-1"></i> Profil organizatora
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-link text-success me-2"></i>Link do rezerwacji dla partnerów</h5>
                     </div>
                     <div class="card-body">
-                        <h4 class="mb-3">@Model.Resource.Company.Name</h4>
-                        @if (!string.IsNullOrEmpty(Model.Resource.Company.Description))
-                        {
-                            <p class="text-muted">@Model.Resource.Company.Description</p>
-                        }
-                        <a href="@Url.Action("Details", "Company", new { id = Model.Resource.Company.Id })" class="btn btn-sm btn-outline-primary w-100">
-                            <i class="fas fa-info-circle"></i> Zobacz profil organizatora
-                        </a>
-                    </div>
-                </div>
-            }
+                        <p class="text-muted small mb-3">Skopiuj poniższe linki aby umieścić je na swojej stronie. Gość otrzyma opcję rezerwacji oraz powróci na twoją stronę po zarezerwowaniu.</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Link dla gościa (bez logowania):</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control font-monospace" id="guestLink" value="@($"{Context.Request.Scheme}://{Context.Request.Host}{Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })}")" readonly />
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('guestLink', this)">
+                                    <i class="fas fa-copy"></i> Kopiuj
+                                </button>
+                            </div>
+                        </div>
 
-            <!-- Social Sharing -->
-            <div class="card shadow mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-share-alt"></i> Udostępnij</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="https://www.facebook.com/sharer/sharer.php?u=@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.Path)" 
-                           target="_blank" 
-                           class="btn btn-primary">
-                            <i class="fab fa-facebook-f"></i> Udostępnij na Facebook
-                        </a>
-                        <a href="https://twitter.com/intent/tweet?text=@Uri.EscapeDataString(Model.Title)&url=@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.Path)" 
-                           target="_blank" 
-                           class="btn btn-info text-white">
-                            <i class="fab fa-twitter"></i> Udostępnij na Twitter
-                        </a>
-                        <button class="btn btn-secondary" onclick="copyLink()">
-                            <i class="fas fa-link"></i> Skopiuj link
-                        </button>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Link z callback (z powrotem na stronę):</label>
+                            <small class="text-muted d-block mb-2">Uzupełnij URL swojej strony:</small>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="callbackUrl" placeholder="https://restauracja.pl/rezerwacja" />
+                                <button class="btn btn-primary" type="button" onclick="generateCallbackLink()">
+                                    <i class="fas fa-magic"></i> Generuj
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="callbackLinkResult" class="mt-3" style="display: none;">
+                            <label class="form-label small fw-bold">Link z powrotem na stronę:</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control font-monospace" id="callbackLink" readonly />
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('callbackLink', this)">
+                                    <i class="fas fa-copy"></i> Kopiuj
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-share-alt text-info me-2"></i>Udostępnij</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.Path)" target="_blank" class="btn btn-primary">
+                                <i class="fab fa-facebook-f"></i> Facebook
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?text=@Uri.EscapeDataString(Model.Title)&url=@(Context.Request.Scheme)://@(Context.Request.Host)@(Context.Request.Path)" target="_blank" class="btn btn-info text-white">
+                                <i class="fab fa-twitter"></i> X / Twitter
+                            </a>
+                            <button class="btn btn-outline-secondary" onclick="copyLink()">
+                                <i class="fas fa-link"></i> Skopiuj link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-hand-pointer me-2"></i>Akcje</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.ResourceId })" class="btn btn-primary">
+                        <i class="fas fa-chair"></i> Wybierz miejsce
+                    </a>
+                    <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-success">
+                        <i class="fas fa-user-check"></i> Zarezerwuj (logowanie)
+                    </a>
+                    <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-success">
+                        <i class="fas fa-user"></i> Rezerwuj jako gość
+                    </a>
+                    <a href="@Url.Action("GetSeatMap", "Seat", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-info">
+                        <i class="fas fa-map"></i> Mapa miejsc
+                    </a>
+                    @if (ViewBag.UserReservationId != null)
+                    {
+                        <a href="@Url.Action("Buy", "Ticket", new { reservationId = ViewBag.UserReservationId })" class="btn btn-outline-primary">
+                            <i class="fas fa-ticket-alt"></i> Kup bilet
+                        </a>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                    {
+                        <a href="@Url.Action("Edit", "Event", new { id = Model.Id })" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edytuj
+                        </a>
+                    }
+                    <a href="@Url.Action("Index", "Event")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Wróć do listy
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-    <!-- Action Buttons -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-hand-pointer"></i> Akcje</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.ResourceId })" class="btn btn-primary">
-                            <i class="fas fa-chair"></i> Wybierz miejsce
-                        </a>
-                        <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-success">
-                            <i class="fas fa-user-check"></i> Zarezerwuj (logowanie)
-                        </a>
-                        <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-success">
-                            <i class="fas fa-user"></i> Rezerwuj jako gość
-                        </a>
-                        <a href="@Url.Action("GetSeatMap", "Seat", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-info">
-                            <i class="fas fa-map"></i> Mapa miejsc
-                        </a>
-                        @if (ViewBag.UserReservationId != null)
-                        {
-                            <a href="@Url.Action("Buy", "Ticket", new { reservationId = ViewBag.UserReservationId })" class="btn btn-outline-primary">
-                                <i class="fas fa-ticket-alt"></i> Kup bilet
-                            </a>
-                        }
-                        @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
-                        {
-                            <a href="@Url.Action("Edit", "Event", new { id = Model.Id })" class="btn btn-warning">
-                                <i class="fas fa-edit"></i> Edytuj
-                            </a>
-                        }
-                        <a href="@Url.Action("Index", "Event")" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Wróć do listy
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-<script>
-    @if (isUpcoming)
-    {
-        @:var eventDate = new Date('@Model.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")').getTime();
-        @:
-        @:function updateCountdown() {
-        @:    var now = new Date().getTime();
-        @:    var distance = eventDate - now;
-        @:    
-        @:    if (distance @("<") 0) {
-        @:        location.reload();
-        @:        return;
-        @:    }
-        @:    
-        @:    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        @:    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        @:    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        @:    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        @:    
-        @:    document.getElementById('countdown-days').textContent = days;
-        @:    document.getElementById('countdown-hours').textContent = hours;
-        @:    document.getElementById('countdown-minutes').textContent = minutes;
-        @:    document.getElementById('countdown-seconds').textContent = seconds;
-        @:}
-        @:
-        @:updateCountdown();
-        @:setInterval(updateCountdown, 1000);
-    }
-    
-    // Copy link functionality
-    function copyLink() {
-        var url = window.location.href;
-        navigator.clipboard.writeText(url).then(function() {
-            alert('Link skopiowany do schowka!');
-        }, function() {
-            alert('Nie udało się skopiować linku');
-        });
-    }
-</script>
+@section Scripts {
+    <script>
+        const isUpcomingEvent = @isUpcoming.ToString().ToLower();
+        
+        function copyToClipboard(elementId, button) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            navigator.clipboard.writeText(element.value).then(() => {
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Skopiowano!';
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
+        }
+        
+        function generateCallbackLink() {
+            const callbackUrl = document.getElementById('callbackUrl').value;
+            if (!callbackUrl) {
+                alert('Podaj URL strony zwrotnej');
+                return;
+            }
+            
+            // Walidacja URL - musi być https lub localhost
+            let url;
+            try {
+                url = new URL(callbackUrl);
+                if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+                    alert('URL musi używać HTTPS (lub localhost do testowania)');
+                    return;
+                }
+            } catch {
+                alert('Podaj prawidłowy URL (np. https://restauracja.pl/rezerwacja)');
+                return;
+            }
+            
+            const guestLink = document.getElementById('guestLink').value;
+            const separator = guestLink.includes('?') ? '&' : '?';
+            // Użyj encodeURIComponent aby bezpiecznie kodować URL
+            const fullLink = guestLink + separator + 'returnUrl=' + encodeURIComponent(callbackUrl);
+            
+            document.getElementById('callbackLink').value = fullLink;
+            document.getElementById('callbackLinkResult').style.display = 'block';
+        }
+
+        if (isUpcomingEvent) {
+            const eventDate = new Date('@Model.StartTime.ToString("yyyy-MM-ddTHH:mm:ss")').getTime();
+
+            function updateCountdown() {
+                const nowMs = new Date().getTime();
+                const distance = eventDate - nowMs;
+
+                if (distance < 0) {
+                    location.reload();
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById('countdown-days').textContent = days;
+                document.getElementById('countdown-hours').textContent = hours;
+                document.getElementById('countdown-minutes').textContent = minutes;
+                document.getElementById('countdown-seconds').textContent = seconds;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        function copyLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(function() {
+                alert('Link skopiowany do schowka!');
+            }, function() {
+                alert('Nie udało się skopiować linku');
+            });
+        }
+    </script>
+}
 
 
