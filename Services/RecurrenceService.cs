@@ -18,6 +18,9 @@ namespace UniversalReservationMVC.Services
 
         public async Task<List<Event>> GenerateOccurrencesAsync(Event templateEvent, RecurrencePattern pattern, DateTime? untilDate = null)
         {
+            // Yield once to keep the method truly asynchronous and avoid CS1998
+            await Task.Yield();
+
             var occurrences = new List<Event>();
             var currentDate = templateEvent.StartTime.Date;
             var duration = templateEvent.EndTime - templateEvent.StartTime;

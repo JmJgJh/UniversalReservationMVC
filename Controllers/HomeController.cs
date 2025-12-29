@@ -79,7 +79,7 @@ namespace UniversalReservationMVC.Controllers
                     .CountAsync(),
                 
                 TotalSpent = await _db.Payments
-                    .Where(p => p.Reservation.UserId == userId && p.Status == PaymentStatus.Succeeded)
+                    .Where(p => p.Reservation != null && p.Reservation.UserId == userId && p.Status == PaymentStatus.Succeeded)
                     .SumAsync(p => (decimal?)p.Amount) ?? 0,
                 
                 MyCompanies = await _db.CompanyMembers

@@ -87,15 +87,19 @@
                         <tbody>
                         @foreach (var m in Model)
                         {
+                            var userEmail = m.User?.Email;
+                            var displayName = string.IsNullOrWhiteSpace(m.User?.FirstName) && string.IsNullOrWhiteSpace(m.User?.LastName)
+                                ? (m.User?.UserName ?? "Nieznany użytkownik")
+                                : $"{m.User?.FirstName} {m.User?.LastName}".Trim();
                             <tr>
                                 <td>
-                                    <strong>@(m.User?.FirstName) @(m.User?.LastName)</strong>
-                                    @if (m.User?.Email == User.Identity.Name)
+                                    <strong>@displayName</strong>
+                                    @if (!string.IsNullOrEmpty(userEmail) && string.Equals(userEmail, User.Identity?.Name, StringComparison.OrdinalIgnoreCase))
                                     {
                                         <span class="badge bg-info">Ty</span>
                                     }
                                 </td>
-                                <td>@m.User?.Email</td>
+                                <td>@(userEmail ?? "—")</td>
                                 <td>
                                     @if (m.Role == "Manager")
                                     {

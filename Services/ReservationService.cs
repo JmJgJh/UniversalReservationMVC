@@ -205,6 +205,33 @@ namespace UniversalReservationMVC.Services
 
             _logger.LogInformation("Reservation {ReservationId} updated successfully", reservation.Id);
 
+            // Send update email (user or guest)
+            var email = existing.User?.Email ?? existing.GuestEmail;
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var resource = await _unitOfWork.Resources.GetByIdAsync(existing.ResourceId);
+                var seat = existing.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(existing.SeatId.Value) : null;
+                var seatInfo = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : null;
+                var companyName = resource?.Company?.Name ?? "System Rezerwacji";
+                var displayName = existing.User?.FirstName ?? existing.User?.UserName ?? "Gość";
+
+                try
+                {
+                    await _emailService.SendReservationConfirmationAsync(
+                        email,
+                        displayName,
+                        resource?.Name ?? "Zasób",
+                        existing.StartTime,
+                        seatInfo,
+                        companyName
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send update email for reservation {ReservationId}", reservation.Id);
+                }
+            }
+
             return existing;
         }
 
