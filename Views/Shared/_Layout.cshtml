@@ -52,6 +52,39 @@
                         <li class="nav-item"><a class="nav-link" href="@Url.Action("Login", "Account")"><i class="fas fa-sign-in-alt me-1"></i>Zaloguj się</a></li>
                         <li class="nav-item"><a class="nav-link" href="@Url.Action("Register", "Account")"><i class="fas fa-user-plus me-1"></i>Zarejestruj się</a></li>
                     }
+                    <!-- Language Switcher -->
+                    <li class="nav-item dropdown">
+                        @{
+                            var culture = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                            var flagIcon = culture == "pl" ? "🇵🇱" : "🇬🇧";
+                            var langText = culture == "pl" ? "Polski" : "English";
+                        }
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown">
+                            <span style="font-size: 1.2em;">@flagIcon</span> @langText
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <form method="post" action="@Url.Action("SetLanguage", "Language")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="culture" value="pl" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <button type="submit" class="dropdown-item">
+                                        🇵🇱 Polski
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form method="post" action="@Url.Action("SetLanguage", "Language")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="culture" value="en" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <button type="submit" class="dropdown-item">
+                                        🇬🇧 English
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
