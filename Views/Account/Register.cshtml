@@ -11,6 +11,7 @@
             <hr />
 
             <form method="post" id="registerForm">
+                @Html.AntiForgeryToken()
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                 <!-- Account Type Selection -->

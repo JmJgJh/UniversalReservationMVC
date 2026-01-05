@@ -23,9 +23,6 @@ public class ReportService : IReportService
     {
         _context = context;
         _logger = logger;
-        
-        // Set EPPlus license (version 8+)
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
     }
 
     public async Task<byte[]> GenerateReservationsPdfAsync(IEnumerable<Reservation> reservations, string title)

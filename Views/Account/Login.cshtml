@@ -8,6 +8,7 @@
         <div class="col-md-6">
             <h2>Logowanie</h2>
             <form method="post">
+                @Html.AntiForgeryToken()
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label">E-mail</label>

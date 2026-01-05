@@ -7,6 +7,10 @@ using UniversalReservationMVC.Repositories;
 using Serilog;
 using AspNetCoreRateLimit;
 using Microsoft.OpenApi.Models;
+using OfficeOpenXml;
+
+// Configure EPPlus license for version 7+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
