@@ -37,6 +37,27 @@ System rezerwacji online dla różnych typów zasobów: restauracje, kina, teatr
 
 ## 📦 Instalacja i uruchomienie
 
+### 🚀 Opcja A: Automatyczna instalacja (ZALECANE)
+
+Użyj skryptu setup, który automatycznie skonfiguruje projekt:
+
+```powershell
+# Po sklonowaniu repozytorium
+cd UniversalReservationMVC
+.\setup.ps1
+```
+
+Skrypt automatycznie:
+- Sprawdzi wymagane narzędzia (.NET SDK, dotnet-ef)
+- Przywróci pakiety NuGet
+- **Utworzy bazę danych** (to jest kluczowe!)
+- Zbuduje projekt
+- Opcjonalnie skonfiguruje User Secrets
+
+### 📝 Opcja B: Instalacja manualna
+
+Jeśli wolisz wykonać kroki ręcznie:
+
 ### Krok 1: Klonowanie repozytorium
 
 ```powershell
@@ -64,15 +85,18 @@ dotnet user-secrets set "DefaultAdmin:Email" "admin@example.com"
 > - **Owner:** owner1@example.com / Owner123!
 > - **User:** user1@example.com / User123!
 
-### Krok 4: Aktualizacja bazy danych
+### Krok 4: Aktualizacja bazy danych (WYMAGANE dla nowych użytkowników!)
 
-Jeśli baza danych nie istnieje lub potrzebujesz zastosować nowe migracje:
+⚠️ **WAŻNE:** Baza danych nie jest w repozytorium (plik `.db` jest w `.gitignore`). 
+**Musisz utworzyć bazę danych lokalnie**, uruchamiając migracje:
 
 ```powershell
-dotnet ef database update -c UniversalReservationMVC.Data.ApplicationDbContext
+dotnet ef database update
 ```
 
 Baza danych SQLite zostanie utworzona jako `reservations.db` w głównym folderze projektu.
+
+❌ **Jeśli pominiesz ten krok, zobaczysz błąd:** `SQLite Error 1: 'no such table: Resources'`
 
 ### Krok 5: Uruchomienie aplikacji
 
@@ -226,17 +250,37 @@ dotnet test
 
 ## 🐛 Rozwiązywanie problemów
 
+### ❌ Błąd: "SQLite Error 1: 'no such table: Resources'" lub podobne
+
+**Przyczyna:** Baza danych nie została utworzona. Plik `.db` nie jest w repozytorium.
+
+**Rozwiązanie:**
+```powershell
+dotnet ef database update
+```
+
+### ❌ Błąd: "dotnet ef not found"
+
+**Rozwiązanie:** Zainstaluj narzędzia Entity Framework:
+```powershell
+dotnet tool install --global dotnet-ef
+```
+
+### 🔄 Resetowanie bazy danych
+
+Jeśli chcesz zacząć od nowa z czystą bazą danych:
+```powershell
+# Usuń bazę danych
+Remove-Item reservations.db -Force
+
+# Utwórz nową bazę danych
+dotnet ef database update
+```
+
 ### Brak interfejsu (tylko linki)
 Jeśli po uruchomieniu widzisz tylko listę linków bez stylów:
 - Upewnij się, że istnieje plik `Views/_ViewStart.cshtml`
 - Wykonaj `Ctrl+F5` w przeglądarce (hard refresh)
-
-### Błędy migracji
-```powershell
-# Usuń bazę danych i utwórz od nowa
-Remove-Item reservations.db
-dotnet ef database update
-```
 
 ### Szara mapa miejsc
 Sprawdź konsolę przeglądarki (F12) - może brakować danych w bazie. Upewnij się, że seeding danych się wykonał.
