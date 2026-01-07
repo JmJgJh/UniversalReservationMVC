@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using UniversalReservationMVC.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using UniversalReservationMVC.Data;
 using UniversalReservationMVC.Extensions;
 using UniversalReservationMVC.ViewModels;
 using UniversalReservationMVC.Models;
@@ -11,17 +11,21 @@ namespace UniversalReservationMVC.Controllers
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _db;
-        public HomeController(ApplicationDbContext db) => _db = db;
 
-        [ResponseCache(Duration = 60, VaryByQueryKeys = new string[] { })]  
+        public HomeController(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
+        [ResponseCache(Duration = 60, VaryByQueryKeys = new string[] { })]
         public async Task<IActionResult> Index()
         {
-            // If user is authenticated, redirect to dashboard
+            // Jeœli u¿ytkownik jest zalogowany, przekieruj na dashboard
             if (User.Identity?.IsAuthenticated ?? false)
             {
                 return RedirectToAction(nameof(Dashboard));
             }
-            
+
             var resources = await _db.Resources.AsNoTracking().Take(10).ToListAsync();
             return View(resources);
         }
@@ -31,62 +35,69 @@ namespace UniversalReservationMVC.Controllers
         {
             var userId = User.GetCurrentUserId();
             if (userId == null)
-            {
                 return RedirectToAction(nameof(Index));
-            }
 
             var now = DateTime.Now;
-            
+
             var viewModel = new UserDashboardViewModel
             {
-                UpcomingReservations = await _db.Reservations
-                    .AsNoTracking()
-                    .Include(r => r.Resource)
-                    .Include(r => r.Event)
-                    .Include(r => r.Seat)
-                    .Where(r => r.UserId == userId && r.StartTime > now)
-                    .OrderBy(r => r.StartTime)
-                    .Take(5)
-                    .ToListAsync(),
-                
-                PastReservations = await _db.Reservations
-                    .AsNoTracking()
-                    .Include(r => r.Resource)
-                    .Include(r => r.Event)
-                    .Where(r => r.UserId == userId && r.EndTime < now)
-                    .OrderByDescending(r => r.EndTime)
-                    .Take(5)
-                    .ToListAsync(),
-                
-                UpcomingEvents = await _db.Events
-                    .AsNoTracking()
-                    .Include(e => e.Resource)
-                    .Where(e => e.StartTime > now)
-                    .OrderBy(e => e.StartTime)
-                    .Take(6)
-                    .ToListAsync(),
-                
-                TotalReservationsCount = await _db.Reservations
-                    .Where(r => r.UserId == userId)
-                    .CountAsync(),
-                
-                ActiveReservationsCount = await _db.Reservations
-                    .Where(r => r.UserId == userId && r.Status == ReservationStatus.Confirmed)
-                    .CountAsync(),
-                
-                CompletedReservationsCount = await _db.Reservations
-                    .Where(r => r.UserId == userId && r.Status == ReservationStatus.Completed)
-                    .CountAsync(),
-                
+                // Statystyki
+                TotalReservationsCount = await _db.Reservations.CountAsync(r => r.UserId == userId),
+                ActiveReservationsCount = await _db.Reservations.CountAsync(r => r.UserId == userId && r.Status == ReservationStatus.Confirmed),
+                CompletedReservationsCount = await _db.Reservations.CountAsync(r => r.UserId == userId && r.Status == ReservationStatus.Completed),
                 TotalSpent = await _db.Payments
-                    .Where(p => p.Reservation != null && p.Reservation.UserId == userId && p.Status == PaymentStatus.Succeeded)
-                    .SumAsync(p => (decimal?)p.Amount) ?? 0,
-                
+                                    .Where(p => p.Reservation != null && p.Reservation.UserId == userId && p.Status == PaymentStatus.Succeeded)
+                                    .SumAsync(p => (decimal?)p.Amount) ?? 0,
+
+                // Nadchodz¹ce rezerwacje
+                UpcomingReservations = await _db.Reservations
+                                                .AsNoTracking()
+                                                .Include(r => r.Resource)
+                                                .Include(r => r.Event)
+                                                .Include(r => r.Seat)
+                                                .Where(r => r.UserId == userId && r.StartTime > now)
+                                                .OrderBy(r => r.StartTime)
+                                                .Take(5)
+                                                .ToListAsync(),
+
+                // Przesz³e rezerwacje
+                PastReservations = await _db.Reservations
+                                            .AsNoTracking()
+                                            .Include(r => r.Resource)
+                                            .Include(r => r.Event)
+                                            .Where(r => r.UserId == userId && r.EndTime < now)
+                                            .OrderByDescending(r => r.EndTime)
+                                            .Take(5)
+                                            .ToListAsync(),
+
+                // Nadchodz¹ce wydarzenia
+                UpcomingEvents = await _db.Events
+                                          .AsNoTracking()
+                                          .Include(e => e.Resource)
+                                          .Where(e => e.StartTime > now)
+                                          .OrderBy(e => e.StartTime)
+                                          .Take(6)
+                                          .ToListAsync(),
+
+                // Firmy u¿ytkownika
                 MyCompanies = await _db.CompanyMembers
-                    .Where(cm => cm.UserId == userId && cm.IsActive)
-                    .Include(cm => cm.Company)
-                    .Select(cm => cm.Company)
-                    .ToListAsync()
+                                       .Where(cm => cm.UserId == userId && cm.IsActive)
+                                       .Include(cm => cm.Company)
+                                       .Select(cm => cm.Company)
+                                       .ToListAsync(),
+
+                // Wybrane miejsca
+                SelectedSeats = await _db.Reservations
+                                         .Where(r => r.UserId == userId && r.Status == ReservationStatus.Confirmed && r.Seat != null)
+                                         .Include(r => r.Resource)
+                                         .Include(r => r.Seat)
+                                         .Select(r => new SelectedSeatViewModel
+                                         {
+                                             ResourceName = r.Resource!.Name,
+                                             X = r.Seat!.X,
+                                             Y = r.Seat!.Y
+                                         })
+                                         .ToListAsync()
             };
 
             return View(viewModel);

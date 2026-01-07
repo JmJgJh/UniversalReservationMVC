@@ -4,6 +4,7 @@ using UniversalReservationMVC.Common;
 using UniversalReservationMVC.Models;
 using UniversalReservationMVC.Services;
 using UniversalReservationMVC.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace UniversalReservationMVC.Controllers
 {
@@ -15,7 +16,7 @@ namespace UniversalReservationMVC.Controllers
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
-            SignInManager<ApplicationUser> signInManager, 
+            SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ICompanyService companyService,
             ILogger<AccountController> logger)
@@ -30,6 +31,7 @@ namespace UniversalReservationMVC.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            ViewData["LoginError"] = null; // Pasek błędu ukryty
             return View();
         }
 
@@ -38,15 +40,58 @@ namespace UniversalReservationMVC.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+                var result = await _signInManager.PasswordSignInAsync(
+                    model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
                 if (result.Succeeded)
                 {
-                    return RedirectToLocal(returnUrl);
+                    // Pobierz użytkownika
+                    var user = await _userManager.FindByEmailAsync(model.Email);
+
+                    if (user != null)
+                    {
+                        // Zwykły użytkownik -> dashboard
+                        if (user.Role == UserRole.User)
+                            return RedirectToAction("Dashboard", "Account");
+
+                        // Właściciel -> panel firmy
+                        if (user.Role == UserRole.Owner)
+                            return RedirectToAction("Dashboard", "Company");
+                    }
+
+                    return RedirectToAction(nameof(HomeController.Index), "Home");
                 }
-                ModelState.AddModelError(string.Empty, "Błąd logowania.");
+
+                // Błąd logowania
+                ViewData["LoginError"] = "Błędne dane logowania";
             }
+
+            return View(model);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Dashboard()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return RedirectToAction("Login");
+
+            // Przykładowe dane do ViewModel – w realnym projekcie pobierasz z bazy
+            var model = new UserDashboardViewModel
+            {
+                TotalReservationsCount = 5, // np. _reservationService.GetTotalCount(user.Id)
+                ActiveReservationsCount = 2,
+                CompletedReservationsCount = 3,
+                UpcomingReservations = new List<Reservation>
+                {
+                    new Reservation { Resource = new Resource { Name = "Sala A" }, StartTime = DateTime.Now.AddHours(2) },
+                    new Reservation { Resource = new Resource { Name = "Sala B" }, StartTime = DateTime.Now.AddDays(1) }
+                }
+            };
+
             return View(model);
         }
 
@@ -60,76 +105,54 @@ namespace UniversalReservationMVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return View(model);
+
+            if (model.AccountType == "owner" && string.IsNullOrWhiteSpace(model.CompanyName))
             {
-                // Validate account type selection
-                if (model.AccountType == "owner" && string.IsNullOrWhiteSpace(model.CompanyName))
-                {
-                    ModelState.AddModelError("CompanyName", "Nazwa firmy jest wymagana dla właścicieli firmy.");
-                    return View(model);
-                }
-
-                var user = new ApplicationUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    Role = model.AccountType == "owner" ? UserRole.Owner : UserRole.User,
-                    EmailConfirmed = true
-                };
-
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    string roleName = model.AccountType == "owner" ? AppConstants.Roles.Owner : AppConstants.Roles.User;
-                    await _userManager.AddToRoleAsync(user, roleName);
-
-                    // If owner, create company
-                    if (model.AccountType == "owner")
-                    {
-                        try
-                        {
-                            var company = new Company
-                            {
-                                Name = model.CompanyName ?? string.Empty,
-                                Address = model.CompanyAddress,
-                                PhoneNumber = model.CompanyPhone,
-                                Email = model.CompanyEmail,
-                                Description = model.CompanyDescription,
-                                OwnerId = user.Id,
-                                IsActive = true,
-                                CreatedAt = DateTime.UtcNow
-                            };
-
-                            await _companyService.CreateCompanyAsync(company);
-                            _logger.LogInformation("Company created for user {UserId}", user.Id);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error creating company for user {UserId}", user.Id);
-                            ModelState.AddModelError(string.Empty, "Błąd przy tworzeniu firmy. Spróbuj ponownie.");
-                            await _userManager.DeleteAsync(user);
-                            return View(model);
-                        }
-                    }
-
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    
-                    // Redirect to appropriate dashboard
-                    if (model.AccountType == "owner")
-                    {
-                        return RedirectToAction("Dashboard", "Company");
-                    }
-                    
-                    return RedirectToAction(nameof(HomeController.Index), "Home");
-                }
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                ModelState.AddModelError("CompanyName", "Nazwa firmy jest wymagana dla właścicieli firmy.");
+                return View(model);
             }
+
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Role = model.AccountType == "owner" ? UserRole.Owner : UserRole.User,
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                string roleName = model.AccountType == "owner" ? AppConstants.Roles.Owner : AppConstants.Roles.User;
+                await _userManager.AddToRoleAsync(user, roleName);
+
+                if (model.AccountType == "owner")
+                {
+                    var company = new Company
+                    {
+                        Name = model.CompanyName ?? "",
+                        OwnerId = user.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        IsActive = true
+                    };
+                    await _companyService.CreateCompanyAsync(company);
+                }
+
+                await _signInManager.SignInAsync(user, false);
+
+                if (user.Role == UserRole.Owner)
+                    return RedirectToAction("Dashboard", "Company");
+
+                return RedirectToAction("Dashboard", "Account");
+            }
+
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+
             return View(model);
         }
 
@@ -143,10 +166,9 @@ namespace UniversalReservationMVC.Controllers
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {
-            if (Url.IsLocalUrl(returnUrl))
-            {
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
-            }
+
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
     }

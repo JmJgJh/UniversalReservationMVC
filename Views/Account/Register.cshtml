@@ -12,7 +12,12 @@
 
             <form method="post" id="registerForm">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                @* 🔹 Pasek błędu tylko jeśli są błędy *@
+                @if (ViewData.ModelState.Values.Any(v => v.Errors.Count > 0))
+                {
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                }
 
                 <!-- Account Type Selection -->
                 <div class="mb-4">
@@ -32,7 +37,7 @@
 
                 <hr />
 
-                <!-- Personal info (always visible) -->
+                <!-- Personal info -->
                 <div class="mb-3">
                     <label asp-for="FirstName" class="form-label">Imię</label>
                     <input asp-for="FirstName" class="form-control" />
@@ -63,7 +68,7 @@
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
 
-                <!-- Company info (visible only for owners) -->
+                <!-- Company info (only for owners) -->
                 <div id="companySection" class="company-fields d-none">
                     <hr />
                     <h5>Dane firmy</h5>
@@ -113,9 +118,11 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const typeUserRadio = document.getElementById('typeUser');
             const typeOwnerRadio = document.getElementById('typeOwner');
             const companySection = document.getElementById('companySection');
