@@ -1,45 +1,133 @@
-﻿@model IEnumerable<UniversalReservationMVC.Models.Seat>
-@{
+﻿@{
     ViewData["Title"] = "Mapa miejsc";
-    var resourceId = ViewBag.ResourceId as int? ?? 0;
-    var resourceName = ViewBag.ResourceName as string ?? "Zasób";
 }
 
+<div class="container mt-4">
+    <h1>Mapa miejsc</h1>
+
+    <!-- Legenda -->
+    <div class="legend mt-2">
+        <div class="legend-item">
+            <span class="legend-box available"></span> <strong>Dostępne</strong>
+        </div>
+        <div class="legend-item">
+            <span class="legend-box reserved"></span> <strong>Zajęte</strong>
+        </div>
+        <div class="legend-item">
+            <span class="legend-box selected"></span> <strong>Wybrane</strong>
+        </div>
+    </div>
+
+    <!-- Mapa miejsc -->
+    <div class="seat-map-container mt-3">
+        <div id="seatGrid" class="seat-grid"></div>
+    </div>
+
+    <!-- Wybrane miejsca -->
+    <div class="selected-seats mt-3">
+        <h5>Wybrane miejsca:</h5>
+        <ul id="selectedSeatsList" class="list-group"></ul>
+    </div>
+</div>
+
+<script>
+    const seats = [];
+    const rows = 5;
+    const cols = 8;
+    const seatGrid = document.getElementById('seatGrid');
+    const selectedSeatsList = document.getElementById('selectedSeatsList');
+
+    // Przykładowe zajęte miejsca
+    const occupiedSeats = new Set([3, 7, 12, 18]);
+
+    let idCounter = 1;
+    for (let y = 1; y <= rows; y++) {
+        for (let x = 1; x <= cols; x++) {
+            seats.push({
+                id: idCounter++,
+                x: x,
+                y: y,
+                label: `${String.fromCharCode(64 + y)}${x}`
+            });
+        }
+    }
+
+    const selectedSeats = new Set();
+
+    function updateSelectedList() {
+        selectedSeatsList.innerHTML = '';
+        if (selectedSeats.size === 0) {
+            selectedSeatsList.innerHTML = '<li class="list-group-item">Brak wybranych miejsc</li>';
+        } else {
+            selectedSeats.forEach(label => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = label;
+                selectedSeatsList.appendChild(li);
+            });
+        }
+    }
+
+    function renderSeats() {
+        seatGrid.innerHTML = '';
+        seatGrid.style.gridTemplateColumns = `repeat(${cols}, 70px)`;
+        seatGrid.style.gridTemplateRows = `repeat(${rows}, 70px)`;
+
+        seats.forEach(seat => {
+            const div = document.createElement('div');
+            div.classList.add('seat');
+
+            if (occupiedSeats.has(seat.id)) {
+                div.classList.add('reserved');
+            } else {
+                div.classList.add('available');
+                div.addEventListener('click', () => {
+                    if (div.classList.contains('selected')) {
+                        div.classList.remove('selected');
+                        div.classList.add('available');
+                        selectedSeats.delete(seat.label);
+                    } else {
+                        div.classList.remove('available');
+                        div.classList.add('selected');
+                        selectedSeats.add(seat.label);
+                    }
+                    updateSelectedList();
+                });
+            }
+
+            div.style.gridColumn = seat.x;
+            div.style.gridRow = seat.y;
+
+            const label = document.createElement('div');
+            label.className = 'seat-label';
+            label.textContent = seat.label;
+            div.appendChild(label);
+
+            seatGrid.appendChild(div);
+        });
+
+        updateSelectedList();
+    }
+
+    renderSeats();
+</script>
+
 <style>
-    /* Seat Map Container - Dark Mode Support */
     .seat-map-container {
-        margin: 30px 0;
         padding: 20px;
         background-color: #f8f9fa;
         border-radius: 8px;
-        transition: background-color 0.3s ease;
+        max-width: fit-content;
+        margin: 20px auto;
     }
 
-    body.dark-mode .seat-map-container {
-        background-color: #2d2d2d;
-    }
-
-    /* Seat Grid */
     .seat-grid {
         display: grid;
         gap: 12px;
-        padding: 30px;
-        background-color: white;
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        margin: 20px auto;
-        max-width: fit-content;
-        transition: background-color 0.3s ease, border-color 0.3s ease;
         justify-items: center;
         align-items: center;
     }
 
-    body.dark-mode .seat-grid {
-        background-color: #1a1a1a;
-        border-color: #444;
-    }
-
-    /* Base Seat Styling */
     .seat {
         display: flex;
         align-items: center;
@@ -50,112 +138,40 @@
         font-weight: 600;
         font-size: 0.85rem;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 2px solid transparent;
-        text-decoration: none;
         color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
     }
 
-    .seat:hover {
-        transform: scale(1.12);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-    }
+        .seat.available {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-color: #1e8449;
+        }
 
-    /* Available Seats - Green with gradient */
-    .seat.available {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        border-color: #1e8449;
-    }
+            .seat.available:hover {
+                filter: brightness(1.1);
+            }
 
-    body.dark-mode .seat.available {
-        background: linear-gradient(135deg, #2ea44f 0%, #1f6feb 100%);
-        border-color: #238636;
-    }
+        .seat.reserved {
+            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+            border-color: #c82333;
+            cursor: not-allowed;
+        }
 
-    .seat.available:hover {
-        background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
-        filter: brightness(1.1);
-    }
+        .seat.selected {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            border-color: #ff6b00;
+            color: #333;
+        }
 
-    body.dark-mode .seat.available:hover {
-        background: linear-gradient(135deg, #238636 0%, #1f6feb 100%);
-        filter: brightness(1.15);
-    }
-
-    /* Unavailable/Reserved Seats - Red */
-    .seat.unavailable,
-    .seat.reserved {
-        background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-        border-color: #c82333;
-        cursor: not-allowed;
-        opacity: 0.75;
-    }
-
-    body.dark-mode .seat.unavailable,
-    body.dark-mode .seat.reserved {
-        background: linear-gradient(135deg, #da3633 0%, #f85149 100%);
-        border-color: #da3633;
-    }
-
-    .seat.unavailable:hover,
-    .seat.reserved:hover {
-        transform: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Occupied Seats - Gray */
-    .seat.occupied {
-        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-        border-color: #495057;
-        cursor: not-allowed;
-        opacity: 0.8;
-    }
-
-    body.dark-mode .seat.occupied {
-        background: linear-gradient(135deg, #444 0%, #333 100%);
-        border-color: #555;
-    }
-
-    .seat.occupied:hover {
-        transform: none;
-    }
-
-    /* Selected Seats - Gold/Yellow */
-    .seat.selected {
-        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-        border-color: #ff6b00;
-        color: #333;
-    }
-
-    .seat.selected:hover {
-        filter: brightness(0.95);
-    }
-
-    /* Seat Label */
     .seat-label {
         font-size: 0.75rem;
-        line-height: 1.2;
         text-align: center;
     }
 
-    /* Legend */
     .legend {
-        margin: 20px 0;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 6px;
-        border-left: 4px solid #007bff;
-        transition: background-color 0.3s ease;
         display: flex;
-        flex-wrap: wrap;
         gap: 20px;
-    }
-
-    body.dark-mode .legend {
-        background-color: #2d2d2d;
-        border-left-color: #0d6efd;
-        color: #f0f0f0;
     }
 
     .legend-item {
@@ -165,224 +181,26 @@
     }
 
     .legend-box {
-        display: inline-flex;
         width: 24px;
         height: 24px;
         border-radius: 4px;
-        flex-shrink: 0;
-        border: 1px solid rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0,0,0,0.1);
     }
 
-    .legend-box.available {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    }
+        .legend-box.available {
+            background: #28a745;
+        }
 
-    .legend-box.unavailable,
-    .legend-box.reserved {
-        background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-    }
+        .legend-box.reserved {
+            background: #dc3545;
+        }
 
-    .legend-box.occupied {
-        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    }
+        .legend-box.selected {
+            background: #ffc107;
+        }
 
-    .legend-box.selected {
-        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    .selected-seats {
+        max-width: 600px;
+        margin: 20px auto;
     }
 </style>
-
-<link rel="stylesheet" href="~/css/seat-map-responsive.css" />
-
-<div class="container">
-    <h1>Mapa miejsc - @resourceName</h1>
-    <p class="text-muted">Wybierz przedział czasu, kliknij miejsce (zielone), aby je zarezerwować.</p>
-
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label">Początek</label>
-            <input type="datetime-local" class="form-control" id="startTime" />
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">Koniec</label>
-            <input type="datetime-local" class="form-control" id="endTime" />
-        </div>
-    </div>
-
-    <div class="legend">
-        <div class="legend-item">
-            <span class="legend-box available"></span>
-            <strong>Dostępne</strong>
-        </div>
-        <div class="legend-item">
-            <span class="legend-box unavailable"></span>
-            <strong>Zajęte / Zablokowane</strong>
-        </div>
-    </div>
-
-    <div class="seat-map-container">
-        <div id="seatGrid" class="seat-grid"></div>
-    </div>
-
-    <div class="mt-3 d-flex gap-2">
-        <a href="@Url.Action("Details", "Resource", new { id = resourceId })" class="btn btn-secondary">Wróć do zasobu</a>
-        <button id="refreshBtn" class="btn btn-outline-primary">Odśwież dostępność</button>
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js" integrity="sha512-jZpQe6w3mJm2jWQioCROuUuZzLq5cM0+qUeF+oCkCkYz2xLh1gYgC6Bf6qW8R4fQv6YfEwG6kH3D1V5pB7wSMA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
-    const resourceId = @resourceId;
-    const seatGrid = document.getElementById('seatGrid');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const startInput = document.getElementById('startTime');
-    const endInput = document.getElementById('endTime');
-    let seats = [];
-    const eventId = @(ViewBag.EventId != null ? ViewBag.EventId : "null");
-    const eventStartIso = '@(ViewBag.EventStart is DateTime ? ((DateTime)ViewBag.EventStart).ToString("o") : "")';
-    const eventEndIso = '@(ViewBag.EventEnd is DateTime ? ((DateTime)ViewBag.EventEnd).ToString("o") : "")';
-
-    function toIsoLocal(input) {
-        const v = input.value;
-        if (!v) return null;
-        return new Date(v).toISOString();
-    }
-
-    function createSeatElement(seat, occupied) {
-        const div = document.createElement('div');
-        div.className = 'seat ' + (occupied ? 'unavailable' : 'available');
-        div.setAttribute('data-seat-id', seat.id);
-        div.setAttribute('data-x', seat.x);
-        div.setAttribute('data-y', seat.y);
-        div.style.gridColumn = seat.x;
-        div.style.gridRow = seat.y;
-        
-        const label = document.createElement('div');
-        label.className = 'seat-label';
-        label.textContent = seat.label || `${seat.row || ''}${seat.column || ''}`;
-        div.appendChild(label);
-
-        if (!occupied) {
-            div.addEventListener('click', async () => {
-                const start = toIsoLocal(startInput);
-                const end = toIsoLocal(endInput);
-                if (!start || !end) {
-                    alert('Podaj poprawny przedział czasu.');
-                    return;
-                }
-                
-                // Try a soft-hold
-                const url = `/Seat/Hold?resourceId=${resourceId}&seatId=${seat.id}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
-                const res = await fetch(url, { method: 'POST' });
-                if (!res.ok) {
-                    const msg = await res.text();
-                    alert('Nie udało się zablokować miejsca: ' + msg);
-                    return;
-                }
-                
-                // Redirect to reservation flow
-                const isAuthenticated = @((User?.Identity?.IsAuthenticated ?? false).ToString().ToLower());
-                const eventParam = eventId !== null ? `&eventId=${eventId}` : '';
-                if (isAuthenticated) {
-                    window.location.href = `@Url.Action("Create", "Reservation")?resourceId=${resourceId}&seatId=${seat.id}${eventParam}`;
-                } else {
-                    window.location.href = `@Url.Action("GuestCreate", "Reservation")?resourceId=${resourceId}&seatId=${seat.id}${eventParam}`;
-                }
-            });
-        }
-
-        return div;
-    }
-
-    async function loadSeats() {
-        const res = await fetch(`/Seat/MapJson?resourceId=${resourceId}`);
-        seats = await res.json();
-        console.log('Loaded seats:', seats.length);
-        render();
-        await refreshAvailability();
-    }
-
-    async function refreshAvailability() {
-        const start = toIsoLocal(startInput);
-        const end = toIsoLocal(endInput);
-        if (!start || !end) return;
-        const res = await fetch(`/Seat/Availability?resourceId=${resourceId}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
-        const data = await res.json();
-        const occupiedSet = new Set(data.occupiedSeatIds || []);
-        render(occupiedSet);
-    }
-
-    function render(occupiedSet = new Set()) {
-        // Clear grid
-        while (seatGrid.firstChild) {
-            seatGrid.removeChild(seatGrid.firstChild);
-        }
-        
-        if (seats.length === 0) {
-            seatGrid.innerHTML = '<div class="alert alert-info">Brak miejsc dla tego zasobu. Skonfiguruj miejsca w panelu administracyjnym.</div>';
-            return;
-        }
-
-        // Calculate grid size
-        let maxX = 0, maxY = 0;
-        seats.forEach(s => { 
-            maxX = Math.max(maxX, s.x); 
-            maxY = Math.max(maxY, s.y); 
-        });
-
-        // Set grid template
-        seatGrid.style.gridTemplateColumns = `repeat(${maxX}, 70px)`;
-        seatGrid.style.gridTemplateRows = `repeat(${maxY}, 70px)`;
-        
-        // Create seat elements
-        seats.forEach(seat => {
-            const occupied = occupiedSet.has(seat.id);
-            const seatElement = createSeatElement(seat, occupied);
-            seatGrid.appendChild(seatElement);
-        });
-    }
-
-    refreshBtn.addEventListener('click', refreshAvailability);
-
-    const toLocalInputValue = (d) => {
-        const off = d.getTimezoneOffset();
-        const local = new Date(d.getTime() - off * 60000);
-        return local.toISOString().slice(0,16);
-    };
-    
-    if (eventStartIso && eventEndIso) {
-        startInput.value = toLocalInputValue(new Date(eventStartIso));
-        endInput.value = toLocalInputValue(new Date(eventEndIso));
-    } else {
-        const now = new Date();
-        startInput.value = toLocalInputValue(new Date(now.getTime() + 60*60*1000));
-        endInput.value = toLocalInputValue(new Date(now.getTime() + 2*60*60*1000));
-    }
-    
-    startInput.addEventListener('change', refreshAvailability);
-    endInput.addEventListener('change', refreshAvailability);
-
-    // SignalR subscription
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl('/hubs/seat')
-        .withAutomaticReconnect()
-        .build();
-    
-    connection.on('SeatHoldPlaced', (payload) => {
-        if (payload.resourceId === resourceId) refreshAvailability();
-    });
-    connection.on('SeatHoldReleased', (payload) => {
-        if (payload.resourceId === resourceId) refreshAvailability();
-    });
-    connection.on('SeatReserved', (payload) => {
-        if (payload.resourceId === resourceId) refreshAvailability();
-    });
-    connection.on('SeatReservationCancelled', (payload) => {
-        if (payload.resourceId === resourceId) refreshAvailability();
-    });
-    
-    connection.start().then(() => {
-        connection.invoke('JoinResource', resourceId.toString());
-    }).catch(err => console.error('SignalR connection error:', err));
-
-    loadSeats();
-</script>

@@ -72,8 +72,9 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
 
 // Database: default to SQLite. Change to MSSQL in appsettings if desired.
+var dbPath = Path.Combine(AppContext.BaseDirectory, "reservations.db");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=reservations.db"));
+    options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
     options.SignIn.RequireConfirmedAccount = false;
