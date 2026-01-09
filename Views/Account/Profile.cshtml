@@ -1,0 +1,80 @@
+@model UniversalReservationMVC.ViewModels.UserProfileViewModel
+@{
+    ViewData["Title"] = "Mój profil";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2><i class="fas fa-user-circle"></i> Mój profil</h2>
+            <p class="text-muted">Zarządzaj swoimi danymi osobowymi</p>
+            <hr />
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Dane osobowe</h5>
+
+                        <div class="mb-3">
+                            <label for="Email" class="form-label">E-mail</label>
+                            <input type="email" id="Email" name="Email" value="@Model.Email" class="form-control" readonly disabled />
+                            <small class="text-muted">Adres e-mail nie może być zmieniony.</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="FirstName" class="form-label">Imię <span class="text-danger">*</span></label>
+                                    <input type="text" id="FirstName" name="FirstName" value="@Model.FirstName" class="form-control" required />
+                                    <span class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="LastName" class="form-label">Nazwisko <span class="text-danger">*</span></label>
+                                    <input type="text" id="LastName" name="LastName" value="@Model.LastName" class="form-control" required />
+                                    <span class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="PhoneNumber" class="form-label">Numer telefonu</label>
+                            <input type="tel" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber" class="form-control" placeholder="+48 123 456 789" />
+                            <span class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Zapisz zmiany
+                    </button>
+                    <a href="@Url.Action("Dashboard", "Account")" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Anuluj
+                    </a>
+                </div>
+            </form>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Bezpieczeństwo</h5>
+                    <p class="text-muted">Zarządzaj hasłem i ustawieniami bezpieczeństwa</p>
+                    <a href="#" class="btn btn-outline-warning">
+                        <i class="fas fa-key"></i> Zmień hasło
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+@model UniversalReservationMVC.ViewModels.ReservationEditViewModel
+
+@{
+    ViewData["Title"] = "Edytuj rezerwację";
+}
+
+<div class="container mt-4">
+    <h2>Edytuj rezerwację</h2>
+    <hr />
+    
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ResourceId" />
+                <input type="hidden" asp-for="SeatId" />
+                <input type="hidden" asp-for="EventId" />
+                
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Szczegóły rezerwacji</h5>
+                        <p class="mb-1"><strong>Zasób:</strong> @Model.ResourceName</p>
+                        @if (!string.IsNullOrEmpty(Model.SeatLabel))
+                        {
+                            <p class="mb-1"><strong>Miejsce:</strong> @Model.SeatLabel</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="StartTime" class="form-label"></label>
+                    <input asp-for="StartTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="EndTime" class="form-label"></label>
+                    <input asp-for="EndTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Zapisz zmiany
+                    </button>
+                    <a asp-action="MyReservations" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Anuluj
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle"></i> Informacje</h6>
+                <ul class="mb-0 small">
+                    <li>Możesz zmienić daty rezerwacji</li>
+                    <li>Maksymalny czas rezerwacji to 24 godziny</li>
+                    <li>Nie można ustawić rezerwacji w przeszłości</li>
+                    <li>System sprawdzi dostępność miejsca</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

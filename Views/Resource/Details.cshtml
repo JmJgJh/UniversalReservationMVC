@@ -1,0 +1,108 @@
+﻿@model UniversalReservationMVC.Models.Resource
+@{
+    ViewData["Title"] = Model.Name;
+    var currentEvent = ViewBag.CurrentEvent as UniversalReservationMVC.Models.Event;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h1>@Model.Name</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <p class="mb-2"><strong>Typ zasobu:</strong> @Model.ResourceType</p>
+                    <p class="mb-2"><strong>Lokalizacja:</strong> @Model.Location</p>
+                    <p><strong>Opis:</strong></p>
+                    <p>@Model.Description</p>
+                </div>
+            </div>
+
+            @if (currentEvent != null)
+            {
+                <div class="card border-success mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar-event"></i> Trwające wydarzenie
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>@currentEvent.Title</h6>
+                        <p class="mb-2">@currentEvent.Description</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-0"><small class="text-muted">Rozpoczęcie:</small></p>
+                                <p class="mb-2"><strong>@currentEvent.StartTime.ToString("dd.MM.yyyy HH:mm")</strong></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-0"><small class="text-muted">Zakończenie:</small></p>
+                                <p class="mb-2"><strong>@currentEvent.EndTime.ToString("dd.MM.yyyy HH:mm")</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3 mb-0">
+                            <p class="mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                To wydarzenie jest aktualnie w trakcie!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-secondary mb-4">
+                    <p class="mb-0">
+                        <i class="bi bi-calendar-x"></i>
+                        Brak trwającego wydarzenia dla tego zasobu.
+                    </p>
+                </div>
+            }
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Akcje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.Id })" class="btn btn-primary">
+                            <i class="bi bi-calendar-check"></i> Rezerwuj
+                        </a>
+                        <a href="@Url.Action("Index", "Resource")" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Wróć do listy
+                        </a>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                        {
+                            <a href="@Url.Action("Edit", "Resource", new { id = Model.Id })" class="btn btn-warning">
+                                <i class="bi bi-pencil"></i> Edytuj
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informacje</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><small class="text-muted">ID zasobu:</small></p>
+                    <p class="mb-3">@Model.Id</p>
+                    
+                    <p class="mb-2"><small class="text-muted">Typ:</small></p>
+                    <p class="mb-3"><span class="badge bg-info">@Model.ResourceType</span></p>
+                    
+                    @if (currentEvent != null)
+                    {
+                        <p class="mb-2"><small class="text-muted">Status:</small></p>
+                        <p class="mb-0"><span class="badge bg-success">Zajęty (Trwa event)</span></p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

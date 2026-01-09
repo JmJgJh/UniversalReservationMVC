@@ -1,0 +1,245 @@
+﻿@model UniversalReservationMVC.ViewModels.ReservationCreateViewModel
+@{
+    ViewData["Title"] = "Nowa rezerwacja";
+    var seats = ViewBag.Seats as List<UniversalReservationMVC.Models.Seat> ?? new List<UniversalReservationMVC.Models.Seat>();
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2><i class="fas fa-calendar-plus me-2"></i>Nowa rezerwacja</h2>
+            <p class="text-muted">Wybierz miejsce i podaj szczegóły rezerwacji</p>
+
+            @if (ViewBag.ResourceName != null)
+            {
+                <div class="alert alert-info fade-in">
+                    <i class="fas fa-door-open me-2"></i><strong>Zasób:</strong> @ViewBag.ResourceName
+                </div>
+            }
+
+            @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+
+            <!-- Alert o wybranym miejscu -->
+            <div id="seatSelectedAlert" class="alert alert-success d-none mb-4" role="alert">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Wybrane miejsce:</strong> <span id="selectedSeatInfo" class="badge bg-light text-dark fs-6"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="changeSeatBtn">
+                        <i class="fas fa-exchange-alt me-1"></i>Zmień miejsce
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seat Picker -->
+            <div class="mb-4" id="seatPickerContainer">
+                @await Html.PartialAsync("_SeatPickerPartial", (Model.ResourceId, Model.StartTime, Model.EndTime, seats))
+            </div>
+
+            <form method="post" id="reservationForm">
+                @Html.AntiForgeryToken()
+                
+                <input type="hidden" asp-for="ResourceId" />
+                <input type="hidden" asp-for="SeatId" />
+                <input type="hidden" asp-for="EventId" />
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <div class="card shadow mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Termin rezerwacji</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (ViewBag.EventTitle != null)
+                        {
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                <strong>Wydarzenie:</strong> @ViewBag.EventTitle<br/>
+                                <small>Daty są ustawione zgodnie z czasem trwania wydarzenia</small>
+                            </div>
+                        }
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data i godzina rozpoczęcia</label>
+                                <input type="datetime-local" class="form-control" asp-for="StartTime" 
+                                       value="@Model.StartTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                                <span class="invalid-feedback" asp-validation-for="StartTime"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data i godzina zakończenia</label>
+                                <input type="datetime-local" class="form-control" asp-for="EndTime" 
+                                       value="@Model.EndTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                                <span class="invalid-feedback" asp-validation-for="EndTime"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Podsumowanie</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <strong><i class="fas fa-chair me-1"></i>Wybrane miejsce:</strong> 
+                            <span class="badge bg-warning" id="seatLabel">@ViewBag.SeatLabel</span>
+                        </p>
+                        @if (Model.EventId.HasValue)
+                        {
+                            <p>
+                                <strong><i class="fas fa-calendar-alt me-1"></i>Wydarzenie:</strong> 
+                                <span class="badge bg-primary">ID: @Model.EventId</span>
+                            </p>
+                        }
+                        @if (ViewBag.ResourcePrice != null && (decimal)ViewBag.ResourcePrice > 0)
+                        {
+                            <hr />
+                            <p class="mb-0">
+                                <strong><i class="fas fa-money-bill-wave me-1"></i>Cena:</strong> 
+                                <span class="h4 text-success">@((decimal)ViewBag.ResourcePrice) PLN</span>
+                            </p>
+                        }
+                    </div>
+                </div>
+
+                @if (ViewBag.ResourcePrice != null && (decimal)ViewBag.ResourcePrice > 0)
+                {
+                    <div class="card shadow mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Płatność</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Po potwierdzeniu rezerwacji zostaniesz przekierowany do bezpiecznej płatności Stripe.
+                            </div>
+                            <div id="payment-element"></div>
+                            <p class="text-muted small mt-2 mb-0">
+                                <i class="fas fa-lock me-1"></i>
+                                Płatność jest obsługiwana przez Stripe - bezpieczny operator płatności.
+                            </p>
+                        </div>
+                    </div>
+                }
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="@Url.Action("Details", "Resource", new { id = Model.ResourceId })" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i>Anuluj
+                    </a>
+                    @if (ViewBag.ResourcePrice != null && (decimal)ViewBag.ResourcePrice > 0)
+                    {
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-credit-card me-1"></i>Rezerwuj i zapłać
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Potwierdź rezerwację
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Wskazówki</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2">Kliknij na zielone miejsce aby je wybrać</li>
+                        <li class="mb-2">Czerwone miejsca są już zajęte</li>
+                        <li class="mb-2">Zmień daty aby sprawdzić dostępność</li>
+                        <li>Rezerwacja zostanie potwierdzona automatycznie</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Szczegóły</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Zasób ID:</strong> @Model.ResourceId</p>
+                    @if (Model.SeatId.HasValue)
+                    {
+                        <p><strong>Miejsce ID:</strong> @Model.SeatId</p>
+                    }
+                    <hr>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Po potwierdzeniu otrzymasz email z potwierdzeniem rezerwacji
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/signalr@1.0.27/dist/browser/signalr.min.js"></script>
+    <script>
+        // Obsługa wyboru miejsca i ukrywania mapy
+        document.addEventListener('DOMContentLoaded', function() {
+            const seatIdInput = document.querySelector('input[name="SeatId"]');
+            const alert = document.getElementById('seatSelectedAlert');
+            const seatPickerContainer = document.getElementById('seatPickerContainer');
+            const changeSeatBtn = document.getElementById('changeSeatBtn');
+            const selectedSeatInfo = document.getElementById('selectedSeatInfo');
+            const form = document.getElementById('reservationForm');
+            
+            if (seatIdInput) {
+                // Obserwuj zmiany w polu SeatId
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                            checkSeatSelection();
+                        }
+                    });
+                });
+                
+                observer.observe(seatIdInput, { attributes: true });
+                
+                // Również nasłuchuj na zdarzenie input
+                seatIdInput.addEventListener('input', checkSeatSelection);
+                seatIdInput.addEventListener('change', checkSeatSelection);
+                
+                // Przycisk zmiany miejsca
+                if (changeSeatBtn) {
+                    changeSeatBtn.addEventListener('click', function() {
+                        seatPickerContainer.classList.remove('d-none');
+                        alert.classList.add('d-none');
+                        seatPickerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+                
+                function checkSeatSelection() {
+                    if (seatIdInput.value) {
+                        // Miejsce wybrane - ukryj mapę, pokaż alert
+                        seatPickerContainer.classList.add('d-none');
+                        alert.classList.remove('d-none');
+                        
+                        // Pobierz informację o miejscu z label
+                        const seatLabel = document.getElementById('seatLabel');
+                        if (seatLabel && selectedSeatInfo) {
+                            selectedSeatInfo.textContent = seatLabel.textContent;
+                        }
+                        
+                        // Przewiń płynnie do formularza
+                        setTimeout(() => {
+                            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 300);
+                    } else {
+                        // Brak wyboru - pokaż mapę, ukryj alert
+                        seatPickerContainer.classList.remove('d-none');
+                        alert.classList.add('d-none');
+                    }
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,155 @@
+@model UniversalReservationMVC.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Rejestracja";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <h2>Utwórz konto</h2>
+            <p class="text-muted">Wybierz typ konta, który chcesz stworzyć</p>
+            <hr />
+
+            <form asp-action="Register" asp-controller="Account" method="post" id="registerForm" data-ajax="false">
+                @Html.AntiForgeryToken()
+
+                @* 🔹 Wyświetl wszystkie błędy jeśli są *@
+                @if (!ViewContext.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach (var error in ViewContext.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <!-- Account Type Selection -->
+                <div class="mb-4">
+                    <label class="form-label"><strong>Typ konta</strong></label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="AccountType" id="typeUser" value="user" checked />
+                        <label class="btn btn-outline-primary" for="typeUser">
+                            👤 Zwykły użytkownik
+                        </label>
+
+                        <input type="radio" class="btn-check" name="AccountType" id="typeOwner" value="owner" />
+                        <label class="btn btn-outline-primary" for="typeOwner">
+                            🏢 Właściciel firmy
+                        </label>
+                    </div>
+                    <span class="text-danger"></span>
+                </div>
+
+                <hr />
+
+                <!-- Personal info -->
+                <div class="mb-3">
+                    <label for="FirstName" class="form-label">Imię</label>
+                    <input type="text" id="FirstName" name="FirstName" class="form-control" required />
+                    <span class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="LastName" class="form-label">Nazwisko</label>
+                    <input type="text" id="LastName" name="LastName" class="form-control" required />
+                    <span class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Email" class="form-label">E-mail</label>
+                    <input type="email" id="Email" name="Email" class="form-control" required />
+                    <span class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Password" class="form-label">Hasło</label>
+                    <input type="password" id="Password" name="Password" class="form-control" autocomplete="new-password" required minlength="6" />
+                    <span class="text-danger"></span>
+                    <small class="form-text text-muted">Hasło musi mieć minimum 6 znaków.</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="ConfirmPassword" class="form-label">Potwierdź hasło</label>
+                    <input type="password" id="ConfirmPassword" name="ConfirmPassword" class="form-control" autocomplete="new-password" required />
+                    <span class="text-danger"></span>
+                </div>
+
+                <!-- Company info (only for owners) -->
+                <div id="companySection" class="company-fields d-none">
+                    <hr />
+                    <h5>Dane firmy</h5>
+
+                    <div class="mb-3">
+                        <label for="CompanyName" class="form-label">Nazwa firmy <span class="text-danger">*</span></label>
+                        <input type="text" id="companyNameInput" name="CompanyName" class="form-control" placeholder="np. ABC Sp. z o.o." />
+                        <span class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="CompanyAddress" class="form-label">Adres</label>
+                        <input type="text" id="CompanyAddress" name="CompanyAddress" class="form-control" placeholder="ul. Przykładowa 1, 00-001 Warszawa" />
+                        <span class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="CompanyPhone" class="form-label">Telefon</label>
+                                <input type="text" id="CompanyPhone" name="CompanyPhone" class="form-control" placeholder="+48 12 345 67 89" />
+                                <span class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="CompanyEmail" class="form-label">Email firmy</label>
+                                <input type="email" id="CompanyEmail" name="CompanyEmail" class="form-control" placeholder="kontakt@firma.pl" />
+                                <span class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="CompanyDescription" class="form-label">Opis firmy</label>
+                        <textarea id="CompanyDescription" name="CompanyDescription" class="form-control" rows="2" placeholder="Opisz swoją firmę"></textarea>
+                        <span class="text-danger"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Zarejestruj się</button>
+            </form>
+
+            <p class="mt-3 text-center">Masz już konto? <a href="@Url.Action("Login", "Account")">Zaloguj się</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const typeUserRadio = document.getElementById('typeUser');
+            const typeOwnerRadio = document.getElementById('typeOwner');
+            const companySection = document.getElementById('companySection');
+            const companyNameInput = document.getElementById('companyNameInput');
+            const registerForm = document.getElementById('registerForm');
+
+            function toggleCompanySection() {
+                if (typeOwnerRadio.checked) {
+                    companySection.classList.remove('d-none');
+                    companyNameInput.setAttribute('required', 'required');
+                } else {
+                    companySection.classList.add('d-none');
+                    companyNameInput.removeAttribute('required');
+                }
+            }
+
+            typeUserRadio.addEventListener('change', toggleCompanySection);
+            typeOwnerRadio.addEventListener('change', toggleCompanySection);
+
+            // Initial toggle
+            toggleCompanySection();
+        });
+    </script>
+}

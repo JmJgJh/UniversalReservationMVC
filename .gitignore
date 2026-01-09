@@ -1,0 +1,23 @@
+# Build output
+**/bin/
+**/obj/
+
+# VS & User state
+.vs/
+*.user
+*.suo
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+
+# Test output
+UniversalReservationMVC.Tests/bin/
+UniversalReservationMVC.Tests/obj/
+
+# Logs
+*.log
+
+# Publish
+**/wwwroot/lib/**

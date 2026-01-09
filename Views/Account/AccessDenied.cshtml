@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Brak dostępu";
+    var returnUrl = ViewData["ReturnUrl"]?.ToString();
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card border-danger">
+                <div class="card-body p-5">
+                    <i class="fas fa-ban text-danger" style="font-size: 4rem;"></i>
+                    <h1 class="mt-4 text-danger">Brak dostępu</h1>
+                    <p class="lead mt-3">
+                        Nie masz uprawnień do wyświetlenia tej strony.
+                    </p>
+                    
+                    @if (!string.IsNullOrEmpty(returnUrl))
+                    {
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Próbowałeś uzyskać dostęp do: <code>@returnUrl</code>
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            Jeśli uważasz, że to błąd, skontaktuj się z administratorem lub właścicielem zasobu.
+                        </p>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary me-2">
+                            <i class="fas fa-home me-1"></i>Strona główna
+                        </a>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a href="@Url.Action("Dashboard", "Account")" class="btn btn-outline-secondary">
+                                <i class="fas fa-dashboard me-1"></i>Mój panel
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Login", "Account", new { returnUrl = returnUrl })" class="btn btn-outline-success">
+                                <i class="fas fa-sign-in-alt me-1"></i>Zaloguj się
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

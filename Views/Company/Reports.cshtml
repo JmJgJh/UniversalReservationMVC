@@ -1,0 +1,213 @@
+@using UniversalReservationMVC.Models
+@using UniversalReservationMVC.ViewModels
+@model CompanyReportViewModel
+
+@{
+    ViewData["Title"] = "Raporty i analityka";
+    var company = ViewBag.Company as Company;
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>📊 Raporty i analityka</h2>
+            <p class="text-muted">Szczegółowe statystyki i analizy Twojej firmy</p>
+        </div>
+        <div class="col-auto">
+            <a href="@Url.Action("Dashboard")" class="btn btn-outline-secondary">Wróć do panelu</a>
+        </div>
+    </div>
+
+    <!-- Główne statystyki -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">@Model.TotalResources</h3>
+                    <p class="card-text text-muted">Zasoby</p>
+                    <small class="text-muted">Aktywne zasoby Twojej firmy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">@Model.TotalSeats</h3>
+                    <p class="card-text text-muted">Stanowiska</p>
+                    <small class="text-muted">Łączna liczba stanowisk</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">@Model.TotalReservations</h3>
+                    <p class="card-text text-muted">Rezerwacje</p>
+                    <small class="text-muted">Wszystkie rezerwacje</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">@((Model.OccupancyRate * 100).ToString("F1"))%</h3>
+                    <p class="card-text text-muted">Zajętość</p>
+                    <small class="text-muted">Średnia zajętość zasobów</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wybór okresu czasu -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">📅 Okres analizy</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Od daty</label>
+                    <input type="date" name="from" class="form-control" value="@Model.From?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Do daty</label>
+                    <input type="date" name="to" class="form-control" value="@Model.To?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">🔄 Odśwież raport</button>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-outline-secondary w-100">📥 Pobierz PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wykresy (placeholdery) -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">📈 Rezerwacje w czasie</h6>
+                </div>
+                <div class="card-body" style="height: 300px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <div class="text-center text-muted">
+                        <p>📊 Tutaj pojawi się wykres rezerwacji w ciągu czasu</p>
+                        <small>Implementacja wykresu: Chart.js lub Plotly</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">🥧 Zajętość zasobów</h6>
+                </div>
+                <div class="card-body" style="height: 300px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <div class="text-center text-muted">
+                        <p>🥧 Tutaj pojawi się wykres zajętości</p>
+                        <small>Percentowy udział każdego zasobu</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Szczegółowa analiza zasobów -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">🔍 Analiza zasobów</h6>
+        </div>
+        <div class="card-body">
+            @if (Model.Resources.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Zasób</th>
+                                <th>Typ</th>
+                                <th>Stanowiska</th>
+                                <th>Rezerwacje</th>
+                                <th>Zajętość</th>
+                                <th>Przychód</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var resource in Model.Resources)
+                            {
+                                <tr>
+                                    <td><strong>@resource.Name</strong></td>
+                                    <td><span class="badge bg-light text-dark">@resource.ResourceType</span></td>
+                                    <td>@resource.SeatCount</td>
+                                    <td>@resource.ReservationCount</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" style="width: @((resource.Occupancy * 100).ToString("F0"))%">@((resource.Occupancy * 100).ToString("F0"))%</div>
+                                        </div>
+                                    </td>
+                                    <td><span class="text-muted">@resource.Revenue.ToString("F2") PLN</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">
+                    Brak zasobów do analizy. <a asp-action="Resources">Dodaj zasób</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Top działania -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">⭐ Najpopularniejsze zasoby</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="list-group list-group-numbered">
+                        @foreach (var resource in Model.Resources.OrderByDescending(r => r.ReservationCount).Take(5))
+                        {
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>@resource.Name</span>
+                                <span class="badge bg-primary">@resource.ReservationCount rezerwacji</span>
+                            </li>
+                        }
+                        @if (!Model.Resources.Any())
+                        {
+                            <li class="list-group-item text-muted">Brak danych</li>
+                        }
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">📅 Godziny szczytu</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>Poniedziałek - piątek:</strong> 10:00 - 14:00
+                            <span class="badge bg-success float-end">89% zajętości</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Sobota:</strong> 14:00 - 18:00
+                            <span class="badge bg-success float-end">72% zajętości</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Niedziela:</strong> 10:00 - 16:00
+                            <span class="badge bg-warning float-end">45% zajętości</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

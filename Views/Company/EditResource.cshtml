@@ -1,0 +1,156 @@
+@using UniversalReservationMVC.Models
+@model Resource
+
+@{
+    ViewData["Title"] = "Edytuj zasób";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📝 Edytuj zasób</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="EditResource" asp-route-resourceId="@Model.Id">
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label">Nazwa zasobu</label>
+                        <input asp-for="Name" class="form-control" placeholder="np. Sala konferencyjna A" />
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ResourceType" class="form-label">Typ zasobu</label>
+                            <select asp-for="ResourceType" class="form-select">
+                                <option value="">-- Wybierz typ --</option>
+                                <option value="Sala">Sala</option>
+                                <option value="Studio">Studio</option>
+                                <option value="Parking">Parking</option>
+                                <option value="Biuro">Biuro</option>
+                                <option value="Inne">Inne</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Location" class="form-label">Lokalizacja</label>
+                            <input asp-for="Location" class="form-control" placeholder="np. Budynek A, piętro 2" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Capacity" class="form-label">Pojemność (liczba stanowisk)</label>
+                            <input asp-for="Capacity" class="form-control" type="number" min="1" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Wymiary mapy pomieszczeń</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Szerokość (X)</label>
+                                    <input type="number" class="form-control" id="gridWidth" value="5" min="1" max="20" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Wysokość (Y)</label>
+                                    <input type="number" class="form-control" id="gridHeight" value="5" min="1" max="20" />
+                                </div>
+                            </div>
+                            <small class="text-muted">Możesz zmienić wymiary i edytować mapę w panelu zarządzania zasobami</small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label">Opis (opcjonalnie)</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Opis zasobu i jego możliwości"></textarea>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Price" class="form-label">Cena (PLN)</label>
+                            <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                            <small class="text-muted">Cena za rezerwację zasobu (zostaw 0 dla darmowych rezerwacji)</small>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-clock me-1"></i>Godziny otwarcia</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">Ustaw godziny dostępności zasobu dla każdego dnia tygodnia. Pozostaw puste dla zasobów dostępnych 24/7.</p>
+                                
+                                @{
+                                    var days = new[] { 
+                                        ("monday", "Poniedziałek"), 
+                                        ("tuesday", "Wtorek"), 
+                                        ("wednesday", "Środa"), 
+                                        ("thursday", "Czwartek"), 
+                                        ("friday", "Piątek"), 
+                                        ("saturday", "Sobota"), 
+                                        ("sunday", "Niedziela") 
+                                    };
+                                }
+
+                                @foreach (var (day, label) in days)
+                                {
+                                    <div class="row mb-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label">@label</label>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="time" class="form-control form-control-sm" 
+                                                   name="WorkingHours[@day].Open" 
+                                                   placeholder="09:00" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="time" class="form-control form-control-sm" 
+                                                   name="WorkingHours[@day].Close" 
+                                                   placeholder="17:00" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       name="WorkingHours[@day].IsClosed" 
+                                                       id="closed_@day" />
+                                                <label class="form-check-label" for="closed_@day">Zamknięte</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Rezerwacje poza godzinami otwarcia będą odrzucane.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">💾 Zapisz zmiany</button>
+                            <a asp-action="Resources" class="btn btn-secondary">Anuluj</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">ℹ️ Informacje</h6>
+                </div>
+                <div class="card-body small">
+                    <p><strong>ID zasobu:</strong> @Model.Id</p>
+                    <p><strong>Utworzono:</strong> @Model.CreatedAt.ToString("dd MMMM yyyy HH:mm")</p>
+                    <p><strong>Ostatnia aktualizacja:</strong> @Model.UpdatedAt?.ToString("dd MMMM yyyy HH:mm")</p>
+                    <p><strong>Liczba stanowisk:</strong> @(Model.Seats?.Count ?? 0)</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">🗺️ Mapa pomieszczeń</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small">Aby edytować mapę pomieszczeń, użyj opcji <strong>Edytuj mapę</strong> w panelu zarządzania zasobami.</p>
+                    <a asp-action="SeatMapBuilder" asp-route-resourceId="@Model.Id" class="btn btn-sm btn-outline-primary w-100">
+                        🗺️ Edytuj mapę
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

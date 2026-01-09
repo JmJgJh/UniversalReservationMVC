@@ -1,0 +1,46 @@
+@model UniversalReservationMVC.Models.Resource
+@{
+    ViewData["Title"] = "Edytuj zasób";
+}
+
+<h2>Edytuj zasób</h2>
+
+<form method="post" class="mt-4">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Nazwa</label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ResourceType" class="form-label">Typ zasobu</label>
+        <select asp-for="ResourceType" class="form-control">
+            <option value="0">-- Wybierz typ --</option>
+            <option value="1">Restauracja</option>
+            <option value="2">Kino</option>
+            <option value="3">Biuro</option>
+            <option value="4">Sala konferencji</option>
+            <option value="5">Teatr</option>
+        </select>
+        <span asp-validation-for="ResourceType" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Location" class="form-label">Lokalizacja</label>
+        <input asp-for="Location" class="form-control" />
+        <span asp-validation-for="Location" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Opis</label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+    <a href="@Url.Action("Index", "Resource")" class="btn btn-secondary">Anuluj</a>
+</form>

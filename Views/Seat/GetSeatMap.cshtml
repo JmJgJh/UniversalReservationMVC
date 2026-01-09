@@ -1,0 +1,206 @@
+﻿@{
+    ViewData["Title"] = "Mapa miejsc";
+}
+
+<div class="container mt-4">
+    <h1>Mapa miejsc</h1>
+
+    <!-- Legenda -->
+    <div class="legend mt-2">
+        <div class="legend-item">
+            <span class="legend-box available"></span> <strong>Dostępne</strong>
+        </div>
+        <div class="legend-item">
+            <span class="legend-box reserved"></span> <strong>Zajęte</strong>
+        </div>
+        <div class="legend-item">
+            <span class="legend-box selected"></span> <strong>Wybrane</strong>
+        </div>
+    </div>
+
+    <!-- Mapa miejsc -->
+    <div class="seat-map-container mt-3">
+        <div id="seatGrid" class="seat-grid"></div>
+    </div>
+
+    <!-- Wybrane miejsca -->
+    <div class="selected-seats mt-3">
+        <h5>Wybrane miejsca:</h5>
+        <ul id="selectedSeatsList" class="list-group"></ul>
+    </div>
+</div>
+
+<script>
+    const seats = [];
+    const rows = 5;
+    const cols = 8;
+    const seatGrid = document.getElementById('seatGrid');
+    const selectedSeatsList = document.getElementById('selectedSeatsList');
+
+    // Przykładowe zajęte miejsca
+    const occupiedSeats = new Set([3, 7, 12, 18]);
+
+    let idCounter = 1;
+    for (let y = 1; y <= rows; y++) {
+        for (let x = 1; x <= cols; x++) {
+            seats.push({
+                id: idCounter++,
+                x: x,
+                y: y,
+                label: `${String.fromCharCode(64 + y)}${x}`
+            });
+        }
+    }
+
+    const selectedSeats = new Set();
+
+    function updateSelectedList() {
+        selectedSeatsList.innerHTML = '';
+        if (selectedSeats.size === 0) {
+            selectedSeatsList.innerHTML = '<li class="list-group-item">Brak wybranych miejsc</li>';
+        } else {
+            selectedSeats.forEach(label => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = label;
+                selectedSeatsList.appendChild(li);
+            });
+        }
+    }
+
+    function renderSeats() {
+        seatGrid.innerHTML = '';
+        seatGrid.style.gridTemplateColumns = `repeat(${cols}, 70px)`;
+        seatGrid.style.gridTemplateRows = `repeat(${rows}, 70px)`;
+
+        seats.forEach(seat => {
+            const div = document.createElement('div');
+            div.classList.add('seat');
+
+            if (occupiedSeats.has(seat.id)) {
+                div.classList.add('reserved');
+            } else {
+                div.classList.add('available');
+                div.addEventListener('click', () => {
+                    if (div.classList.contains('selected')) {
+                        div.classList.remove('selected');
+                        div.classList.add('available');
+                        selectedSeats.delete(seat.label);
+                    } else {
+                        div.classList.remove('available');
+                        div.classList.add('selected');
+                        selectedSeats.add(seat.label);
+                    }
+                    updateSelectedList();
+                });
+            }
+
+            div.style.gridColumn = seat.x;
+            div.style.gridRow = seat.y;
+
+            const label = document.createElement('div');
+            label.className = 'seat-label';
+            label.textContent = seat.label;
+            div.appendChild(label);
+
+            seatGrid.appendChild(div);
+        });
+
+        updateSelectedList();
+    }
+
+    renderSeats();
+</script>
+
+<style>
+    .seat-map-container {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        max-width: fit-content;
+        margin: 20px auto;
+    }
+
+    .seat-grid {
+        display: grid;
+        gap: 12px;
+        justify-items: center;
+        align-items: center;
+    }
+
+    .seat {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border: 2px solid transparent;
+        color: white;
+        transition: all 0.3s;
+    }
+
+        .seat.available {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-color: #1e8449;
+        }
+
+            .seat.available:hover {
+                filter: brightness(1.1);
+            }
+
+        .seat.reserved {
+            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+            border-color: #c82333;
+            cursor: not-allowed;
+        }
+
+        .seat.selected {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            border-color: #ff6b00;
+            color: #333;
+        }
+
+    .seat-label {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
+    .legend {
+        display: flex;
+        gap: 20px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-box {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+        .legend-box.available {
+            background: #28a745;
+        }
+
+        .legend-box.reserved {
+            background: #dc3545;
+        }
+
+        .legend-box.selected {
+            background: #ffc107;
+        }
+
+    .selected-seats {
+        max-width: 600px;
+        margin: 20px auto;
+    }
+</style>

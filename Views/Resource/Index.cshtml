@@ -1,0 +1,47 @@
+@model IEnumerable<UniversalReservationMVC.Models.Resource>
+@{
+    ViewData["Title"] = "Zasoby";
+}
+
+<h1>Zasoby do rezerwacji</h1>
+
+<div class="mb-3">
+    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+    {
+        <a href="@Url.Action("Create", "Resource")" class="btn btn-primary">Dodaj nowy zasób</a>
+    }
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nazwa</th>
+                <th>Typ</th>
+                <th>Lokalizacja</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.ResourceType</td>
+                    <td>@item.Location</td>
+                    <td>
+                        <a href="@Url.Action("Details", "Resource", new { id = item.Id })" class="btn btn-sm btn-info">Szczegóły</a>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                        {
+                            <a href="@Url.Action("Edit", "Resource", new { id = item.Id })" class="btn btn-sm btn-warning">Edytuj</a>
+                            <form method="post" action="@Url.Action("Delete", "Resource", new { id = item.Id })" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Na pewno?')">Usuń</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

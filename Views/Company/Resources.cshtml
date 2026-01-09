@@ -1,0 +1,117 @@
+@model IEnumerable<UniversalReservationMVC.Models.Resource>
+
+@{
+    ViewData["Title"] = "Zarządzaj zasobami";
+    var company = ViewBag.Company as UniversalReservationMVC.Models.Company;
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Zasoby firmy</h1>
+            <p class="text-muted">Zarządzaj pomieszczeniami, stanowiskami pracy i innymi zasobami</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Dashboard", "Company")" class="btn btn-outline-secondary me-2">Wróć</a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createResourceModal">+ Dodaj zasób</button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (Model.Count() == 0)
+    {
+        <div class="alert alert-info">
+            <h4>Brak zasobów</h4>
+            <p>Dodaj swój pierwszy zasób (pomieszczenie, stanowisko pracy itp.), aby móc nim zarządzać i rezerwować.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var resource in Model)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title">@resource.Name</h5>
+                                    <p class="text-muted mb-1">@resource.ResourceType</p>
+                                    <p class="card-text">@resource.Location</p>
+                                </div>
+                                <span class="badge bg-primary">@(resource.Seats?.Count ?? 0) miejsc</span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light d-flex gap-2">
+                            <a href="@Url.Action("SeatMapBuilder", "Company", new { resourceId = resource.Id })" 
+                               class="btn btn-sm btn-outline-primary flex-grow-1">
+                                Edytuj mapę
+                            </a>
+                            <a href="@Url.Action("EditResource", "Company", new { resourceId = resource.Id })" class="btn btn-sm btn-outline-secondary">Edytuj</a>
+                            <form asp-action="DeleteResource" asp-controller="Company" method="post" class="d-inline" onsubmit="return confirm('Usunąć zasób?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="resourceId" value="@resource.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Usuń</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal: Dodaj zasób -->
+<div class="modal fade" id="createResourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj nowy zasób</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="@Url.Action("CreateResource", "Company")">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nazwa zasobu</label>
+                        <input type="text" name="Name" class="form-control" placeholder="np. Sala konferencji A" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Typ zasobu</label>
+                        <select name="ResourceType" class="form-select" required>
+                            <option value="">-- Wybierz typ --</option>
+                            <option value="0">Sala konferencji</option>
+                            <option value="1">Stanowisko pracy</option>
+                            <option value="2">Sala szkoleniowa</option>
+                            <option value="3">Inne</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Lokalizacja</label>
+                        <input type="text" name="Location" class="form-control" placeholder="np. Piętro 2" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Szerokość mapy (liczba kolumn)</label>
+                        <input type="number" name="SeatMapWidth" class="form-control" min="1" max="100" placeholder="5" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Wysokość mapy (liczba rzędów)</label>
+                        <input type="number" name="SeatMapHeight" class="form-control" min="1" max="100" placeholder="5" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Utwórz zasób</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

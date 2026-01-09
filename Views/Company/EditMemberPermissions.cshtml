@@ -1,0 +1,280 @@
+@model UniversalReservationMVC.Models.CompanyMember
+
+@{
+    ViewData["Title"] = "Edytuj uprawnienia - " + Model.User.UserName;
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-user-shield me-2"></i>Edytuj uprawnienia</h1>
+            <p class="text-muted">Pracownik: <strong>@Model.User.UserName</strong> (@Model.User.Email)</p>
+            <p class="text-muted">Firma: <strong>@Model.Company.Name</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Members")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Powrót do listy
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form method="post" asp-action="EditMemberPermissions">
+        <input type="hidden" asp-for="Id" />
+        
+        <!-- Role Selection -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-id-badge me-2"></i>Rola</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="role" class="form-label">Wybierz rolę pracownika</label>
+                    <select id="role" name="role" class="form-select" asp-for="Role">
+                        <option value="Employee">Employee - Zwykły pracownik</option>
+                        <option value="Manager">Manager - Menedżer</option>
+                        <option value="Viewer">Viewer - Widz (tylko podgląd)</option>
+                        <option value="Moderator">Moderator - Moderator</option>
+                    </select>
+                    <small class="text-muted">Rola określa podstawowy poziom dostępu</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions Grid -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-key me-2"></i>Szczegółowe uprawnienia</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">Zaznacz uprawnienia, które chcesz nadać pracownikowi</p>
+
+                <div class="row">
+                    <!-- Resources Management -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canManageResources" 
+                                           name="canManageResources" asp-for="CanManageResources">
+                                    <label class="form-check-label" for="canManageResources">
+                                        <i class="fas fa-door-open text-primary me-2"></i>
+                                        <strong>Zarządzanie zasobami</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Tworzenie, edycja i usuwanie zasobów (pokoje, sale, stanowiska)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View Reservations -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canViewReservations" 
+                                           name="canViewReservations" asp-for="CanViewReservations">
+                                    <label class="form-check-label" for="canViewReservations">
+                                        <i class="fas fa-eye text-info me-2"></i>
+                                        <strong>Przeglądanie rezerwacji</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Dostęp do przeglądania wszystkich rezerwacji w firmie
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Reservations -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canManageReservations" 
+                                           name="canManageReservations" asp-for="CanManageReservations">
+                                    <label class="form-check-label" for="canManageReservations">
+                                        <i class="fas fa-bookmark text-warning me-2"></i>
+                                        <strong>Zarządzanie rezerwacjami</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Tworzenie, edycja, anulowanie rezerwacji klientów
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Events -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canManageEvents" 
+                                           name="canManageEvents" asp-for="CanManageEvents">
+                                    <label class="form-check-label" for="canManageEvents">
+                                        <i class="fas fa-calendar-alt text-success me-2"></i>
+                                        <strong>Zarządzanie wydarzeniami</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Tworzenie, edycja i usuwanie wydarzeń
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View Analytics -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-secondary">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canViewAnalytics" 
+                                           name="canViewAnalytics" asp-for="CanViewAnalytics">
+                                    <label class="form-check-label" for="canViewAnalytics">
+                                        <i class="fas fa-chart-line text-secondary me-2"></i>
+                                        <strong>Dostęp do analityki</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Przeglądanie statystyk, wykresów i dashboardu analitycznego
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Reports -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-dark">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canExportReports" 
+                                           name="canExportReports" asp-for="CanExportReports">
+                                    <label class="form-check-label" for="canExportReports">
+                                        <i class="fas fa-file-export text-dark me-2"></i>
+                                        <strong>Eksport raportów</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Generowanie i pobieranie raportów PDF/Excel
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Members -->
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="canManageMembers" 
+                                           name="canManageMembers" asp-for="CanManageMembers">
+                                    <label class="form-check-label" for="canManageMembers">
+                                        <i class="fas fa-users text-danger me-2"></i>
+                                        <strong>Zarządzanie członkami</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Dodawanie i usuwanie pracowników (wysokie uprawnienie)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Szablony uprawnień</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Szybko ustaw zestaw uprawnień klikając jeden z szablonów:</p>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setViewerPermissions()">
+                        <i class="fas fa-eye me-1"></i>Widz
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setEmployeePermissions()">
+                        <i class="fas fa-user me-1"></i>Pracownik
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="setManagerPermissions()">
+                        <i class="fas fa-user-tie me-1"></i>Menedżer
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="setAllPermissions()">
+                        <i class="fas fa-crown me-1"></i>Wszystkie
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card">
+            <div class="card-body">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save me-2"></i>Zapisz uprawnienia
+                </button>
+                <a href="@Url.Action("Members")" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times me-2"></i>Anuluj
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function setViewerPermissions() {
+            document.getElementById('canManageResources').checked = false;
+            document.getElementById('canViewReservations').checked = true;
+            document.getElementById('canManageReservations').checked = false;
+            document.getElementById('canManageEvents').checked = false;
+            document.getElementById('canViewAnalytics').checked = false;
+            document.getElementById('canExportReports').checked = false;
+            document.getElementById('canManageMembers').checked = false;
+            document.getElementById('role').value = 'Viewer';
+        }
+
+        function setEmployeePermissions() {
+            document.getElementById('canManageResources').checked = false;
+            document.getElementById('canViewReservations').checked = true;
+            document.getElementById('canManageReservations').checked = true;
+            document.getElementById('canManageEvents').checked = false;
+            document.getElementById('canViewAnalytics').checked = false;
+            document.getElementById('canExportReports').checked = false;
+            document.getElementById('canManageMembers').checked = false;
+            document.getElementById('role').value = 'Employee';
+        }
+
+        function setManagerPermissions() {
+            document.getElementById('canManageResources').checked = true;
+            document.getElementById('canViewReservations').checked = true;
+            document.getElementById('canManageReservations').checked = true;
+            document.getElementById('canManageEvents').checked = true;
+            document.getElementById('canViewAnalytics').checked = true;
+            document.getElementById('canExportReports').checked = true;
+            document.getElementById('canManageMembers').checked = false;
+            document.getElementById('role').value = 'Manager';
+        }
+
+        function setAllPermissions() {
+            document.getElementById('canManageResources').checked = true;
+            document.getElementById('canViewReservations').checked = true;
+            document.getElementById('canManageReservations').checked = true;
+            document.getElementById('canManageEvents').checked = true;
+            document.getElementById('canViewAnalytics').checked = true;
+            document.getElementById('canExportReports').checked = true;
+            document.getElementById('canManageMembers').checked = true;
+            document.getElementById('role').value = 'Manager';
+        }
+    </script>
+}

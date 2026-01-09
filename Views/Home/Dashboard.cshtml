@@ -1,0 +1,223 @@
+@model UniversalReservationMVC.ViewModels.UserDashboardViewModel
+@{
+    ViewData["Title"] = "Panel użytkownika";
+}
+
+<div class="container mt-4">
+
+    <!-- Nagłówek powitalny -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">
+                <i class="fas fa-tachometer-alt text-primary"></i>
+                Witaj, @User.Identity!.Name!
+            </h1>
+            <p class="text-muted">Twój osobisty panel rezerwacji</p>
+        </div>
+    </div>
+
+    <!-- Statystyki użytkownika -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase mb-0">Wszystkie</h6>
+                        <h2 class="display-4 fw-bold">@Model.TotalReservationsCount</h2>
+                        <small>rezerwacji</small>
+                    </div>
+                    <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase mb-0">Aktywne</h6>
+                        <h2 class="display-4 fw-bold">@Model.ActiveReservationsCount</h2>
+                        <small>rezerwacje</small>
+                    </div>
+                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase mb-0">Zakończone</h6>
+                        <h2 class="display-4 fw-bold">@Model.CompletedReservationsCount</h2>
+                        <small>rezerwacji</small>
+                    </div>
+                    <i class="fas fa-flag-checkered fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-uppercase mb-0">Wydano</h6>
+                        <h2 class="display-4 fw-bold">@Model.TotalSpent.ToString("C")</h2>
+                        <small>PLN</small>
+                    </div>
+                    <i class="fas fa-wallet fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Nadchodzące rezerwacje -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Nadchodzące rezerwacje</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.UpcomingReservations.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var r in Model.UpcomingReservations)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">
+                                                @r.Resource?.Name
+                                                @if (r.Event != null)
+                                                {
+                                                    <span class="badge bg-info">@r.Event.Title</span>
+                                                }
+                                            </h6>
+                                            <p class="mb-1 text-muted">
+                                                <i class="fas fa-clock"></i> @r.StartTime.ToString("dd.MM.yyyy HH:mm")
+                                                @if (r.Seat != null)
+                                                {
+                                                    <span class="ms-2"><i class="fas fa-chair"></i> Rząd @r.Seat.X, Miejsce @r.Seat.Y</span>
+                                                }
+                                            </p>
+                                            <small class="text-muted">
+                                                Status: <span class="badge bg-@(GetStatusBadgeColor(r.Status))">@GetStatusName(r.Status)</span>
+                                            </small>
+                                        </div>
+                                        <div class="ms-3">
+                                            <a href="@Url.Action("Details", "Reservation", new { id = r.Id })" class="btn btn-sm btn-outline-primary">Szczegóły</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-3 text-center">
+                            <a href="@Url.Action("MyReservations", "Reservation")" class="btn btn-primary">
+                                <i class="fas fa-list"></i> Zobacz wszystkie rezerwacje
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-4">Brak nadchodzących rezerwacji</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Wybrane miejsca -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Wybrane miejsca</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.SelectedSeats.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var seat in Model.SelectedSeats)
+                            {
+                                <li class="list-group-item">
+                                    @seat.ResourceName - Rząd @seat.X, Miejsce @seat.Y
+                                    <span class="badge bg-success ms-2">Zarezerwowane</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center mb-0">Nie wybrano jeszcze miejsc</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Szybkie akcje -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Szybkie akcje</h5>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a href="@Url.Action("Index", "Event")" class="btn btn-primary"><i class="fas fa-calendar"></i> Przeglądaj wydarzenia</a>
+                    <a href="@Url.Action("Resources", "Home")" class="btn btn-info text-white"><i class="fas fa-door-open"></i> Przeglądaj zasoby</a>
+                    <a href="@Url.Action("MyReservations", "Reservation")" class="btn btn-secondary"><i class="fas fa-list"></i> Moje rezerwacje</a>
+                    @if (Model.MyCompanies.Any())
+                    {
+                        <a href="@Url.Action("Dashboard", "Company")" class="btn btn-warning">
+                            <i class="fas fa-building"></i> Panel firmy
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Moje firmy -->
+            @if (Model.MyCompanies.Any())
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0"><i class="fas fa-building"></i> Moje firmy</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            @foreach (var company in Model.MyCompanies)
+                            {
+                                <a href="@Url.Action("Dashboard", "Company", new { id = company.Id })" class="list-group-item list-group-item-action">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">@company.Name</h6>
+                                            <small class="text-muted">@company.Description</small>
+                                        </div>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusName(UniversalReservationMVC.Models.ReservationStatus status)
+    {
+        return status switch
+        {
+            UniversalReservationMVC.Models.ReservationStatus.Pending => "Oczekująca",
+            UniversalReservationMVC.Models.ReservationStatus.Confirmed => "Potwierdzona",
+            UniversalReservationMVC.Models.ReservationStatus.Cancelled => "Anulowana",
+            UniversalReservationMVC.Models.ReservationStatus.Completed => "Zakończona",
+            _ => status.ToString()
+        };
+    }
+
+    string GetStatusBadgeColor(UniversalReservationMVC.Models.ReservationStatus status)
+    {
+        return status switch
+        {
+            UniversalReservationMVC.Models.ReservationStatus.Pending => "warning",
+            UniversalReservationMVC.Models.ReservationStatus.Confirmed => "success",
+            UniversalReservationMVC.Models.ReservationStatus.Cancelled => "danger",
+            UniversalReservationMVC.Models.ReservationStatus.Completed => "secondary",
+            _ => "secondary"
+        };
+    }
+}

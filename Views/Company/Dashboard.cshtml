@@ -1,0 +1,317 @@
+@model UniversalReservationMVC.Models.Company
+
+@{
+    ViewData["Title"] = "Panel Firmy";
+    
+    // Calculate statistics
+    var totalResources = Model.Resources?.Count ?? 0;
+    var totalSeats = Model.Resources?.Sum(r => r.Seats?.Count ?? 0) ?? 0;
+    var totalReservations = Model.Resources?.Sum(r => 0) ?? 0; // Will be fetched from service
+    var occupancyRate = totalSeats > 0 ? ((totalSeats - 0) * 100 / totalSeats) : 0; // Placeholder
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>@Model.Name</h1>
+            <p class="text-muted">Panel zarządzania firmą i zasobami</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Edit", "Company")" class="btn btn-primary">Edytuj dane firmy</a>
+        </div>
+    </div>
+
+    <!-- Informacje o firmie -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card-primary text-center">
+                <div class="card-body">
+                    <i class="fas fa-door-open icon-lg"></i>
+                    <h5 class="card-title mt-3">Zasoby</h5>
+                    <p class="display-4">@totalResources</p>
+                    <p class="mb-3">pomieszczeń / stanowisk</p>
+                    <a href="@Url.Action("Resources", "Company")" class="btn btn-light btn-sm">Zarządzaj</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stats-card-success text-center">
+                <div class="card-body">
+                    <i class="fas fa-chair icon-lg"></i>
+                    <h5 class="card-title mt-3">Stanowiska</h5>
+                    <p class="display-4">@totalSeats</p>
+                    <p class="mb-3">wszystkie miejsca</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stats-card-info text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check icon-lg"></i>
+                    <h5 class="card-title mt-3">Rezerwacje</h5>
+                    <p class="display-4">@totalReservations</p>
+                    <p class="mb-3">w tym miesiącu</p>
+                    <a href="@Url.Action("Reservations", "Company")" class="btn btn-light btn-sm">Przegląd</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stats-card-warning text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-pie icon-lg"></i>
+                    <h5 class="card-title mt-3">Zajętość</h5>
+                    <p class="display-4">@occupancyRate%</p>
+                    <p class="mb-3">średnia zajętość</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informacje o firmie -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dane firmy</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Adres:</strong> @(Model.Address ?? "—")</p>
+                    <p><strong>Telefon:</strong> @(Model.PhoneNumber ?? "—")</p>
+                    <p><strong>Email:</strong> @(Model.Email ?? "—")</p>
+                    <p><strong>Status:</strong>
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">Aktywna</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Nieaktywna</span>
+                        }
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="@Url.Action("Edit", "Company")" class="btn btn-sm btn-outline-primary w-100">Edytuj firmę</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Szybkie akcje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#createResourceModal">
+                                <i class="fas fa-plus me-2"></i>Dodaj zasób
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Resources", "Company")" class="btn btn-outline-info w-100">
+                                <i class="fas fa-cog me-2"></i>Zarządzaj zasobami
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Reservations", "Company")" class="btn btn-outline-success w-100">
+                                <i class="fas fa-list me-2"></i>Przeglądaj rezerwacje
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Analytics", "Company")" class="btn btn-outline-info w-100">
+                                <i class="fas fa-chart-line me-2"></i>Analityka
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Reports", "Company")" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-chart-bar me-2"></i>Raporty
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Members", "Company")" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-users me-2"></i>Członkowie
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("Settings", "Company")" class="btn btn-outline-dark w-100">
+                                <i class="fas fa-sliders-h me-2"></i>Ustawienia
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-download me-2"></i>Eksport Raportów</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="exportForm" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Data od:</label>
+                                <input type="date" name="startDate" class="form-control" value="@DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Data do:</label>
+                                <input type="date" name="endDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-danger" onclick="exportReport('pdf')">
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="exportReport('excel')">
+                                        <i class="fas fa-file-excel me-1"></i>Excel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-danger" onclick="downloadFinancialPdf()">
+                            <i class="fas fa-chart-line me-1"></i>Raport Finansowy PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="downloadRevenueExcel()">
+                            <i class="fas fa-money-bill-wave me-1"></i>Przychody Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ostatnie zasoby -->
+    @if (Model.Resources != null && Model.Resources.Count > 0)
+    {
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Twoje zasoby</h5>
+                            <a href="@Url.Action("Resources", "Company")" class="btn btn-sm btn-outline-primary">Wszystkie zasoby</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nazwa</th>
+                                        <th>Typ</th>
+                                        <th>Lokalizacja</th>
+                                        <th>Stanowiska</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var resource in Model.Resources.Take(5))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@resource.Name</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@resource.ResourceType</span>
+                                            </td>
+                                            <td>@(resource.Location ?? "—")</td>
+                                            <td>
+                                                <span class="badge bg-info">@(resource.Seats?.Count ?? 0)</span>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("EditResource", "Company", new { resourceId = resource.Id })" 
+                                                   class="btn btn-sm btn-outline-primary" title="Edytuj">✎</a>
+                                                <a href="@Url.Action("SeatMapBuilder", "Company", new { resourceId = resource.Id })" 
+                                                   class="btn btn-sm btn-outline-info" title="Edytuj mapę">🗺</a>
+                                                <button class="btn btn-sm btn-outline-danger" title="Usuń">🗑</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function exportReport(type) {
+            const form = document.getElementById('exportForm');
+            const startDate = form.querySelector('[name="startDate"]').value;
+            const endDate = form.querySelector('[name="endDate"]').value;
+            
+            const action = type === 'pdf' 
+                ? '@Url.Action("ExportReservationsPdf", "Company")' 
+                : '@Url.Action("ExportReservationsExcel", "Company")';
+            
+            window.location.href = `${action}?startDate=${startDate}&endDate=${endDate}`;
+        }
+        
+        function downloadFinancialPdf() {
+            const form = document.getElementById('exportForm');
+            const startDate = form.querySelector('[name="startDate"]').value;
+            const endDate = form.querySelector('[name="endDate"]').value;
+            window.location.href = `@Url.Action("ExportFinancialSummaryPdf", "Company")?startDate=${startDate}&endDate=${endDate}`;
+        }
+        
+        function downloadRevenueExcel() {
+            const form = document.getElementById('exportForm');
+            const startDate = form.querySelector('[name="startDate"]').value;
+            const endDate = form.querySelector('[name="endDate"]').value;
+            window.location.href = `@Url.Action("ExportRevenueExcel", "Company")?startDate=${startDate}&endDate=${endDate}`;
+        }
+    </script>
+}
+
+<!-- Modal: Dodaj zasób (quick action) -->
+<div class="modal fade" id="createResourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dodaj nowy zasób</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="@Url.Action("CreateResource", "Company")">
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nazwa zasobu <span class="text-danger">*</span></label>
+                        <input type="text" name="Name" class="form-control" placeholder="np. Sala konferencji A" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Typ zasobu <span class="text-danger">*</span></label>
+                        <select name="ResourceType" class="form-select" required>
+                            <option value="">-- Wybierz typ --</option>
+                            <option value="0">Sala konferencji</option>
+                            <option value="1">Stanowisko pracy</option>
+                            <option value="2">Sala szkoleniowa</option>
+                            <option value="3">Inne</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Lokalizacja</label>
+                        <input type="text" name="Location" class="form-control" placeholder="np. Piętro 2" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Utwórz zasób</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

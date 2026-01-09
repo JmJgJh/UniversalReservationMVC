@@ -1,0 +1,379 @@
+﻿@{
+    ViewData["Title"] = "Kalendarz - " + ViewBag.ResourceName;
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-calendar-alt me-2"></i>Kalendarz rezerwacji</h1>
+            <p class="text-muted">Zasób: <strong>@ViewBag.ResourceName</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Index", "Resource")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Powrót do zasobów
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label"><i class="fas fa-filter me-1"></i>Status</label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">Wszystkie statusy</option>
+                        <option value="Confirmed">Potwierdzone</option>
+                        <option value="Pending">Oczekujące</option>
+                        <option value="Cancelled">Anulowane</option>
+                        <option value="Completed">Ukończone</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label"><i class="fas fa-eye me-1"></i>Widok</label>
+                    <select id="viewSelector" class="form-select">
+                        <option value="dayGridMonth">Miesiąc</option>
+                        <option value="timeGridWeek">Tydzień</option>
+                        <option value="timeGridDay">Dzień</option>
+                        <option value="listWeek">Lista (tydzień)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="showEvents" checked>
+                        <label class="form-check-label" for="showEvents">
+                            <i class="fas fa-calendar-check me-1"></i>Wydarzenia
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="showReservations" checked>
+                        <label class="form-check-label" for="showReservations">
+                            <i class="fas fa-bookmark me-1"></i>Rezerwacje
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button id="refreshBtn" class="btn btn-primary w-100">
+                        <i class="fas fa-sync-alt me-1"></i>Odśwież
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FullCalendar -->
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h6><i class="fas fa-info-circle me-2"></i>Legenda:</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="badge bg-success me-2"><i class="fas fa-calendar-check"></i> Wydarzenie</span>
+                    <span class="badge bg-primary me-2"><i class="fas fa-check"></i> Potwierdzona</span>
+                    <span class="badge bg-warning text-dark me-2"><i class="fas fa-clock"></i> Oczekująca</span>
+                </div>
+                <div class="col-md-6">
+                    <span class="badge bg-danger me-2"><i class="fas fa-times"></i> Anulowana</span>
+                    <span class="badge bg-secondary me-2"><i class="fas fa-check-circle"></i> Ukończona</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalTitle">Szczegóły</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eventModalBody">
+                <!-- Content will be injected by JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                <a id="eventDetailsLink" href="#" class="btn btn-primary">Zobacz szczegóły</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- FullCalendar CSS & JS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/pl.global.min.js"></script>
+
+    <style>
+        #calendar {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .fc-event {
+            cursor: pointer;
+        }
+        
+        .fc-event-confirmed {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+        
+        .fc-event-pending {
+            background-color: #ffc107 !important;
+            border-color: #ffc107 !important;
+            color: #000 !important;
+        }
+        
+        .fc-event-cancelled {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            text-decoration: line-through;
+        }
+        
+        .fc-event-completed {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+        }
+        
+        .fc-event-event {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+        }
+    </style>
+
+    <script>
+        const resourceId = @ViewBag.ResourceId;
+        let calendar = null;
+        let allEvents = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'pl',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                },
+                buttonText: {
+                    today: 'Dzisiaj',
+                    month: 'Miesiąc',
+                    week: 'Tydzień',
+                    day: 'Dzień',
+                    list: 'Lista'
+                },
+                slotMinTime: '06:00:00',
+                slotMaxTime: '22:00:00',
+                allDaySlot: false,
+                height: 'auto',
+                eventClick: handleEventClick,
+                dateClick: handleDateClick,
+                eventDrop: handleEventDrop,
+                eventResize: handleEventResize,
+                editable: true,
+                droppable: true,
+                eventResizableFromStart: true,
+                loading: function(isLoading) {
+                    if (isLoading) {
+                        console.log('Loading events...');
+                    }
+                }
+            });
+            
+            calendar.render();
+            loadEvents();
+            
+            // Setup filters
+            document.getElementById('statusFilter').addEventListener('change', filterEvents);
+            document.getElementById('showEvents').addEventListener('change', filterEvents);
+            document.getElementById('showReservations').addEventListener('change', filterEvents);
+            document.getElementById('viewSelector').addEventListener('change', function() {
+                calendar.changeView(this.value);
+            });
+            document.getElementById('refreshBtn').addEventListener('click', loadEvents);
+        });
+        
+        async function loadEvents() {
+            try {
+                const view = calendar.view;
+                const start = view.activeStart;
+                const end = view.activeEnd;
+                
+                const response = await fetch(`/Calendar/GetReservations?resourceId=${resourceId}&year=${start.getFullYear()}&month=${start.getMonth() + 1}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    alert('Błąd: ' + data.message);
+                    return;
+                }
+                
+                allEvents = [];
+                
+                // Process events
+                if (data.events) {
+                    data.events.forEach(evt => {
+                        allEvents.push({
+                            id: 'event-' + evt.id,
+                            title: '📅 ' + evt.title,
+                            start: evt.startDate,
+                            end: evt.endDate,
+                            backgroundColor: '#28a745',
+                            borderColor: '#28a745',
+                            extendedProps: {
+                                type: 'event',
+                                originalId: evt.id
+                            },
+                            classNames: ['fc-event-event']
+                        });
+                    });
+                }
+                
+                // Process reservations
+                if (data.reservations) {
+                    data.reservations.forEach(res => {
+                        const icon = res.status === 'Confirmed' ? '✓' :
+                                   res.status === 'Pending' ? '⏱' :
+                                   res.status === 'Cancelled' ? '✗' : '✓';
+                        
+                        const color = res.status === 'Confirmed' ? '#0d6efd' :
+                                    res.status === 'Pending' ? '#ffc107' :
+                                    res.status === 'Cancelled' ? '#dc3545' : '#6c757d';
+                        
+                        allEvents.push({
+                            id: 'reservation-' + res.id,
+                            title: icon + ' ' + res.title,
+                            start: res.startDate,
+                            end: res.endDate,
+                            backgroundColor: color,
+                            borderColor: color,
+                            extendedProps: {
+                                type: 'reservation',
+                                status: res.status,
+                                originalId: res.id
+                            },
+                            classNames: ['fc-event-' + res.status.toLowerCase()]
+                        });
+                    });
+                }
+                
+                filterEvents();
+                
+            } catch (error) {
+                console.error('Error loading events:', error);
+                alert('Błąd ładowania danych kalendarza');
+            }
+        }
+        
+        function filterEvents() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const showEvents = document.getElementById('showEvents').checked;
+            const showReservations = document.getElementById('showReservations').checked;
+            
+            const filteredEvents = allEvents.filter(evt => {
+                // Filter by type
+                if (evt.extendedProps.type === 'event' && !showEvents) return false;
+                if (evt.extendedProps.type === 'reservation' && !showReservations) return false;
+                
+                // Filter by status
+                if (statusFilter && evt.extendedProps.status && evt.extendedProps.status !== statusFilter) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            calendar.removeAllEvents();
+            calendar.addEventSource(filteredEvents);
+        }
+        
+        function handleEventClick(info) {
+            const event = info.event;
+            const props = event.extendedProps;
+            
+            const modalTitle = document.getElementById('eventModalTitle');
+            const modalBody = document.getElementById('eventModalBody');
+            const detailsLink = document.getElementById('eventDetailsLink');
+            
+            modalTitle.textContent = event.title;
+            
+            let html = `
+                <p><strong>Typ:</strong> ${props.type === 'event' ? 'Wydarzenie' : 'Rezerwacja'}</p>
+                <p><strong>Start:</strong> ${new Date(event.start).toLocaleString('pl-PL')}</p>
+                <p><strong>Koniec:</strong> ${new Date(event.end).toLocaleString('pl-PL')}</p>
+            `;
+            
+            if (props.status) {
+                const statusText = props.status === 'Confirmed' ? 'Potwierdzona' :
+                                 props.status === 'Pending' ? 'Oczekująca' :
+                                 props.status === 'Cancelled' ? 'Anulowana' : 'Ukończona';
+                html += `<p><strong>Status:</strong> <span class="badge bg-primary">${statusText}</span></p>`;
+            }
+            
+            modalBody.innerHTML = html;
+            
+            if (props.type === 'event') {
+                detailsLink.href = '/Event/Details/' + props.originalId;
+                detailsLink.textContent = 'Zobacz wydarzenie';
+            } else {
+                detailsLink.href = '/Reservation/Details/' + props.originalId;
+                detailsLink.textContent = 'Zobacz rezerwację';
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+            modal.show();
+        }
+        
+        function handleDateClick(info) {
+            const date = info.dateStr;
+            if (confirm(`Utworzyć nową rezerwację na ${new Date(info.date).toLocaleDateString('pl-PL')}?`)) {
+                window.location.href = `/Reservation/Create?resourceId=${resourceId}&startDate=${date}`;
+            }
+        }
+        
+        async function handleEventDrop(info) {
+            if (info.event.extendedProps.type !== 'reservation') {
+                alert('Możesz przesuwać tylko rezerwacje');
+                info.revert();
+                return;
+            }
+            
+            if (!confirm('Zmienić termin rezerwacji?')) {
+                info.revert();
+                return;
+            }
+            
+            // Here you would call an API to update the reservation
+            // For now, just show a message
+            alert('Funkcja przesuwania rezerwacji będzie dostępna po dodaniu API endpoint');
+            info.revert();
+        }
+        
+        async function handleEventResize(info) {
+            if (info.event.extendedProps.type !== 'reservation') {
+                alert('Możesz zmieniać długość tylko rezerwacji');
+                info.revert();
+                return;
+            }
+            
+            if (!confirm('Zmienić czas trwania rezerwacji?')) {
+                info.revert();
+                return;
+            }
+            
+            alert('Funkcja zmiany czasu trwania będzie dostępna po dodaniu API endpoint');
+            info.revert();
+        }
+    </script>
+}
+

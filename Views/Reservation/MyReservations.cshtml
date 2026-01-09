@@ -1,0 +1,42 @@
+@model IEnumerable<UniversalReservationMVC.Models.Reservation>
+@{
+    ViewData["Title"] = "Moje rezerwacje";
+}
+
+<h1>Moje rezerwacje</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Zasób</th>
+                <th>Początek</th>
+                <th>Koniec</th>
+                <th>Status</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Resource?.Name</td>
+                    <td>@item.StartTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.EndTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.Status</td>
+                    <td>
+                        @if (item.Status != UniversalReservationMVC.Models.ReservationStatus.Cancelled)
+                        {
+                            <form method="post" action="@Url.Action("Cancel", "Reservation", new { id = item.Id })" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Na pewno anulować rezerwację?')">Anuluj rezerwację</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<a href="@Url.Action("Index", "Home")" class="btn btn-secondary mt-3">Wróć do strony głównej</a>

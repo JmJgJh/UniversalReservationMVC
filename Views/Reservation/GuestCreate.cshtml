@@ -1,0 +1,95 @@
+﻿@model UniversalReservationMVC.ViewModels.GuestReservationViewModel
+@{
+    ViewData["Title"] = "Rezerwacja jako gość";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Rezerwacja jako gość</h2>
+            <p class="text-muted">Zarezerwuj miejsce bez logowania.</p>
+
+            @if (ViewBag.ResourceName != null)
+            {
+                <div class="alert alert-info">
+                    <strong>Zasób:</strong> @ViewBag.ResourceName
+                </div>
+            }
+
+            @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="ResourceId" />
+                <input type="hidden" asp-for="SeatId" />
+                <input type="hidden" asp-for="EventId" />
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Adres e-mail</label>
+                        <input type="email" class="form-control" asp-for="Email" required placeholder="twoj@email.com" />
+                        <span class="invalid-feedback" asp-validation-for="Email"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Numer telefonu</label>
+                        <input type="tel" class="form-control" asp-for="Phone" required placeholder="+48 123 456 789" />
+                        <span class="invalid-feedback" asp-validation-for="Phone"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Data i godzina rozpoczęcia</label>
+                    <input type="datetime-local" class="form-control" asp-for="StartTime" required />
+                    <span class="invalid-feedback" asp-validation-for="StartTime"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Data i godzina zakończenia</label>
+                    <input type="datetime-local" class="form-control" asp-for="EndTime" required />
+                    <span class="invalid-feedback" asp-validation-for="EndTime"></span>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Uwaga!</strong> Jeśli nie masz konta, twoja rezerwacja będzie w statusie oczekiwania na potwierdzenie.
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check"></i> Zarezerwuj jako gość
+                    </button>
+                    <a href="@Url.Action("Details", "Resource", new { id = Model.ResourceId })" class="btn btn-secondary">
+                        Anuluj
+                    </a>
+                </div>
+            </form>
+
+            <hr />
+
+            <div class="alert alert-info">
+                <strong>Już masz konto?</strong>
+                <a href="@Url.Action("Login", "Account")">Zaloguj się</a> aby dokonać rezerwacji z pełnymi możliwościami.
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Rezerwacja bez konta</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">Przed rezerwacją:</p>
+                    <ul class="small">
+                        <li>Podaj prawidłowy adres e-mail</li>
+                        <li>Podaj numer telefonu</li>
+                        <li>Wybierz czas rezerwacji</li>
+                        <li>Potwierdź rezerwację</li>
+                    </ul>
+                    <p class="text-muted small mt-3">Potwierdzenie rezerwacji będzie wysłane na podany adres e-mail.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

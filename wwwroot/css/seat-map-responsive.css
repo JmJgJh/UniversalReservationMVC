@@ -1,0 +1,141 @@
+/* Responsive Design for Seat Map */
+
+/* Tablets & Medium Screens (768px and down) */
+@media (max-width: 768px) {
+    .seat-grid {
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)) !important;
+        gap: 8px !important;
+        padding: 15px !important;
+    }
+
+    .seat {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .legend {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .legend-item {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Small Screens / Phones (576px and down) */
+@media (max-width: 576px) {
+    .seat-map-container {
+        padding: 15px;
+        margin: 20px 0;
+    }
+
+    .seat-grid {
+        grid-template-columns: repeat(auto-fit, minmax(55px, 1fr)) !important;
+        gap: 7px !important;
+        padding: 12px !important;
+    }
+
+    .seat {
+        width: 55px !important;
+        height: 55px !important;
+        font-size: 0.7rem !important;
+    }
+
+    .seat-label {
+        font-size: 0.65rem;
+    }
+
+    .legend {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-control {
+        font-size: 0.95rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Extra Small Screens / Very Small Phones (480px and down) */
+@media (max-width: 480px) {
+    .seat-map-container {
+        padding: 10px;
+        margin: 15px 0;
+    }
+
+    .seat-grid {
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)) !important;
+        gap: 6px !important;
+        padding: 10px !important;
+    }
+
+    .seat {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 0.65rem !important;
+    }
+
+    .seat:hover {
+        transform: scale(1.08) !important;
+    }
+
+    .legend {
+        padding: 10px !important;
+        margin: 15px 0 !important;
+        gap: 5px !important;
+    }
+
+    .legend-box {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .legend-item {
+        font-size: 0.85rem;
+    }
+
+    h1 {
+        font-size: 1.25rem;
+    }
+
+    p.text-muted {
+        font-size: 0.85rem;
+    }
+}
+
+/* Very Tiny Screens (320px and down) */
+@media (max-width: 320px) {
+    .seat {
+        width: 45px !important;
+        height: 45px !important;
+        font-size: 0.6rem !important;
+    }
+
+    .seat-grid {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)) !important;
+        gap: 4px !important;
+        padding: 8px !important;
+    }
+
+    .legend-box {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    h1 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+}

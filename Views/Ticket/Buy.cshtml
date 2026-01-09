@@ -1,0 +1,122 @@
+﻿@{
+    ViewData["Title"] = "Kup bilet";
+    var reservationId = ViewBag.ReservationId as int? ?? 0;
+    var resourceName = ViewBag.ResourceName as string ?? "Zasób";
+    var seatLabel = ViewBag.SeatLabel as string ?? "Nieznane";
+    var reservationStartTime = ViewBag.ReservationStartTime as DateTime? ?? DateTime.Now;
+    var reservationEndTime = ViewBag.ReservationEndTime as DateTime? ?? DateTime.Now;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Kup bilet</h2>
+            <p class="text-muted">Potwierdź szczegóły i dokończ zakup biletu.</p>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Szczegóły rezerwacji</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Zasób:</strong></p>
+                            <p class="text-muted">@resourceName</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Miejsce:</strong></p>
+                            <p><span class="badge bg-info">@seatLabel</span></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Od:</strong></p>
+                            <p class="text-muted">@reservationStartTime.ToString("dd.MM.yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Do:</strong></p>
+                            <p class="text-muted">@reservationEndTime.ToString("dd.MM.yyyy HH:mm")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" action="@Url.Action("Buy", "Ticket")">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="reservationId" value="@reservationId" />
+
+                <div class="mb-3">
+                    <label class="form-label" for="price">Cena biletu (PLN)</label>
+                    <input type="number" class="form-control" id="price" name="price" 
+                           step="0.01" min="0" required placeholder="0.00" />
+                </div>
+
+                <div class="alert alert-info">
+                    <p class="mb-0">
+                        <strong>Informacja:</strong> Po zakupie bilet będzie dostępny w sekcji 
+                        <a href="@Url.Action("MyTickets", "Ticket")">Moje bilety</a>.
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle"></i> Kup bilet
+                    </button>
+                    <a href="@Url.Action("MyReservations", "Reservation")" class="btn btn-secondary btn-lg">
+                        Anuluj
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Podsumowanie zakupu</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p class="mb-1"><small class="text-muted">Cena biletu:</small></p>
+                        <p id="priceDisplay" class="h5 mb-0">-</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="mb-1"><small class="text-muted">Podatek VAT (23%):</small></p>
+                        <p id="taxDisplay" class="text-muted">-</p>
+                    </div>
+                    <hr />
+                    <div>
+                        <p class="mb-1"><small class="text-muted">Do zapłaty:</small></p>
+                        <p id="totalDisplay" class="h4 text-success mb-0">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Metody płatności</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Obecnie dostępne metody płatności:</p>
+                    <ul class="small">
+                        <li>Karta kredytowa/debetowa</li>
+                        <li>Transfer bankowy</li>
+                        <li>Portfel cyfrowy</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('price').addEventListener('input', function() {
+    const price = parseFloat(this.value) || 0;
+    const tax = price * 0.23;
+    const total = price + tax;
+    
+    document.getElementById('priceDisplay').textContent = price.toFixed(2) + ' PLN';
+    document.getElementById('taxDisplay').textContent = tax.toFixed(2) + ' PLN';
+    document.getElementById('totalDisplay').textContent = total.toFixed(2) + ' PLN';
+});
+</script>

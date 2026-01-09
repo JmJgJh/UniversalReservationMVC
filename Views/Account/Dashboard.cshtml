@@ -1,0 +1,105 @@
+@model UniversalReservationMVC.ViewModels.UserDashboardViewModel
+@{
+    ViewData["Title"] = "Panel użytkownika";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Witaj, @User.Identity!.Name! 👋</h1>
+            <p class="text-muted">Panel użytkownika</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Wszystkie rezerwacje</h5>
+                    <h2 class="text-primary">@Model.TotalReservationsCount</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Aktywne rezerwacje</h5>
+                    <h2 class="text-success">@Model.ActiveReservationsCount</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-secondary">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Zakończone rezerwacje</h5>
+                    <h2 class="text-secondary">@Model.CompletedReservationsCount</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3>Nadchodzące rezerwacje</h3>
+            @if (Model.UpcomingReservations.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Zasób</th>
+                                <th>Data i godzina</th>
+                                <th>Status</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reservation in Model.UpcomingReservations)
+                            {
+                                <tr>
+                                    <td>@reservation.Resource?.Name</td>
+                                    <td>@reservation.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>
+                                        @if (reservation.Status == UniversalReservationMVC.Models.ReservationStatus.Confirmed)
+                                        {
+                                            <span class="badge bg-success">Potwierdzona</span>
+                                        }
+                                        else if (reservation.Status == UniversalReservationMVC.Models.ReservationStatus.Pending)
+                                        {
+                                            <span class="badge bg-warning">Oczekująca</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@reservation.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Details", "Reservation", new { id = reservation.Id })" class="btn btn-sm btn-info">Szczegóły</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Nie masz jeszcze żadnych nadchodzących rezerwacji.
+                    <a href="@Url.Action("Index", "Home")" class="alert-link">Przeglądaj dostępne zasoby</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+                <i class="fas fa-search"></i> Przeglądaj dostępne zasoby
+            </a>
+            <a href="@Url.Action("MyReservations", "Reservation")" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> Wszystkie moje rezerwacje
+            </a>
+        </div>
+    </div>
+</div>
