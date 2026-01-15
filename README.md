@@ -13,6 +13,16 @@ System rezerwacji online dla różnych typów zasobów: restauracje, kina, teatr
 - **Serilog** - zaawansowane logowanie
 - **xUnit** - testy jednostkowe
 
+## 📊 Dokumentacja i Diagramy
+
+📖 **[Pełna dokumentacja z diagramami](docs/)** - Szczegółowa dokumentacja techniczna zawierająca:
+
+- 🎯 [Diagram Przypadków Użycia](docs/diagrams/01-use-case-diagram.md) - Funkcjonalności systemu
+- 🗄️ [Diagram ERD](docs/diagrams/02-erd-diagram.md) - Model danych i relacje
+- 🏗️ [Architektura MVC](docs/diagrams/03-mvc-architecture-diagram.md) - Struktura warstwowa
+- 🔄 [Diagram Sekwencji](docs/diagrams/04-sequence-diagram-reservation.md) - Przepływ rezerwacji
+- 💾 [Model Fizyczny Bazy](docs/diagrams/05-physical-database-model.md) - Szczegóły tabel i indeksów
+
 ## 📋 Funkcje
 
 - ✅ System ról użytkowników (Admin, Owner, User, Guest)
@@ -141,6 +151,9 @@ UniversalReservationMVC/
 ├── Hubs/               # SignalR hubs
 ├── Migrations/         # Migracje EF Core
 ├── wwwroot/           # Pliki statyczne (CSS, JS)
+├── docs/              # 📊 Dokumentacja i diagramy
+│   ├── diagrams/      # Diagramy w formacie Mermaid
+│   └── README.md      # Indeks dokumentacji
 └── appsettings.json   # Konfiguracja aplikacji
 ```
 
@@ -295,6 +308,7 @@ Projekt stworzony jako część pracy dyplomowej.
 
 ## 🔗 Linki
 
+- [📊 Dokumentacja i Diagramy](docs/)
 - [Dokumentacja ASP.NET Core](https://docs.microsoft.com/aspnet/core)
 - [Entity Framework Core](https://docs.microsoft.com/ef/core)
 - [Bootstrap 5](https://getbootstrap.com/)
