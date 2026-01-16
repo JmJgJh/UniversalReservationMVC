@@ -1,5 +1,6 @@
 @using UniversalReservationMVC.Models
-@model UniversalReservationMVC.Models.Resource
+@using UniversalReservationMVC.ViewModels
+@model UniversalReservationMVC.ViewModels.SeatMapBuilderViewModel
 
 @{
     ViewData["Title"] = "Konstruktor mapy pomieszczeń";
@@ -108,7 +109,7 @@
 <script src="https://cdn.jsdelivr.net/npm/signalr@1.0.27/dist/browser/signalr.min.js"></script>
 <script>
     const resourceId = @Model.Id;
-    let seats = @Html.Raw(Json.Serialize(Model.Seats ?? new List<Seat>()));
+    let seats = @Html.Raw(Json.Serialize(Model.Seats));
     let selectedSeatId = null;
     let addingMode = false;
     let pendingClickPosition = null;

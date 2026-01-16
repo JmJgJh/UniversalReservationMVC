@@ -17,53 +17,55 @@
                         @Html.AntiForgeryToken()
 
                         <div class="form-group mb-3">
-                            <label asp-for="Name" class="form-label">Nazwa zasobu</label>
-                        <input asp-for="Name" class="form-control" placeholder="np. Sala konferencyjna A" />
+                            <label for="name" class="form-label">Nazwa zasobu</label>
+                            <input type="text" id="name" name="name" class="form-control" value="@Model.Name" placeholder="np. Sala konferencyjna A" required />
+                        </div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="ResourceType" class="form-label">Typ zasobu</label>
-                            <select asp-for="ResourceType" class="form-select">
+                            <label for="resourceType" class="form-label">Typ zasobu</label>
+                            <select id="resourceType" name="resourceType" class="form-select">
                                 <option value="">-- Wybierz typ --</option>
-                                <option value="Sala">Sala</option>
-                                <option value="Studio">Studio</option>
-                                <option value="Parking">Parking</option>
-                                <option value="Biuro">Biuro</option>
-                                <option value="Inne">Inne</option>
+                                <option value="0" @(Model.ResourceType == ResourceType.Restaurant ? "selected" : "")>Restauracja</option>
+                                <option value="1" @(Model.ResourceType == ResourceType.Cinema ? "selected" : "")>Kino</option>
+                                <option value="2" @(Model.ResourceType == ResourceType.Office ? "selected" : "")>Biuro</option>
+                                <option value="3" @(Model.ResourceType == ResourceType.ConferenceRoom ? "selected" : "")>Sala konferencyjna</option>
+                                <option value="4" @(Model.ResourceType == ResourceType.Theatre ? "selected" : "")>Teatr</option>
+                                <option value="5" @(Model.ResourceType == ResourceType.Desk ? "selected" : "")>Biurko/Miejsce</option>
                             </select>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="Location" class="form-label">Lokalizacja</label>
-                            <input asp-for="Location" class="form-control" placeholder="np. Budynek A, piętro 2" />
+                            <label for="location" class="form-label">Lokalizacja</label>
+                            <input type="text" id="location" name="location" class="form-control" value="@Model.Location" placeholder="np. Budynek A, piętro 2" />
                         </div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="Capacity" class="form-label">Pojemność (liczba stanowisk)</label>
-                            <input asp-for="Capacity" class="form-control" type="number" min="1" />
+                            <label for="capacity" class="form-label">Pojemność (liczba stanowisk)</label>
+                            <input type="number" id="capacity" name="capacity" class="form-control" value="@Model.Capacity" min="1" />
                         </div>
 
                         <div class="form-group mb-3">
                             <label class="form-label">Wymiary mapy pomieszczeń</label>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label">Szerokość (X)</label>
-                                    <input type="number" class="form-control" id="gridWidth" value="5" min="1" max="20" />
+                                    <label for="seatMapWidth" class="form-label">Szerokość (X)</label>
+                                    <input type="number" id="seatMapWidth" name="seatMapWidth" class="form-control" value="@(Model.SeatMapWidth ?? 5)" min="1" max="20" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Wysokość (Y)</label>
-                                    <input type="number" class="form-control" id="gridHeight" value="5" min="1" max="20" />
+                                    <label for="seatMapHeight" class="form-label">Wysokość (Y)</label>
+                                    <input type="number" id="seatMapHeight" name="seatMapHeight" class="form-control" value="@(Model.SeatMapHeight ?? 5)" min="1" max="20" />
                                 </div>
                             </div>
                             <small class="text-muted">Możesz zmienić wymiary i edytować mapę w panelu zarządzania zasobami</small>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="Description" class="form-label">Opis (opcjonalnie)</label>
-                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Opis zasobu i jego możliwości"></textarea>
+                            <label for="description" class="form-label">Opis (opcjonalnie)</label>
+                            <textarea id="description" name="description" class="form-control" rows="3" placeholder="Opis zasobu i jego możliwości">@Model.Description</textarea>
                         </div>
                         <div class="form-group mb-3">
-                            <label asp-for="Price" class="form-label">Cena (PLN)</label>
-                            <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                            <label for="price" class="form-label">Cena (PLN)</label>
+                            <input type="number" id="price" name="price" class="form-control" value="@Model.Price" step="0.01" min="0" placeholder="0.00" />
                             <small class="text-muted">Cena za rezerwację zasobu (zostaw 0 dla darmowych rezerwacji)</small>
                         </div>
 
@@ -120,7 +122,7 @@
                         </div>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">💾 Zapisz zmiany</button>
-                            <a asp-action="Resources" class="btn btn-secondary">Anuluj</a>
+                            <a asp-controller="Company" asp-action="Resources" class="btn btn-secondary">Anuluj</a>
                         </div>
                     </form>
                 </div>

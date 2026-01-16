@@ -11,54 +11,52 @@
             <hr />
 
             <form method="post">
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="OwnerId" />
-                <input type="hidden" asp-for="CreatedAt" />
+                @Html.AntiForgeryToken()
 
                 <div class="form-group mb-3">
-                    <label asp-for="Name" class="form-label">Nazwa firmy</label>
-                    <input asp-for="Name" class="form-control" placeholder="Nazwa firmy" />
+                    <label for="name" class="form-label">Nazwa firmy</label>
+                    <input type="text" id="name" name="name" class="form-control" value="@Model.Name" placeholder="Nazwa firmy" required />
                     <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
 
                 <div class="form-group mb-3">
-                    <label asp-for="Description" class="form-label">Opis</label>
-                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Opisz swoją firmę"></textarea>
+                    <label for="description" class="form-label">Opis</label>
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Opisz swoją firmę">@Model.Description</textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
                 <div class="form-group mb-3">
-                    <label asp-for="Address" class="form-label">Adres</label>
-                    <input asp-for="Address" class="form-control" placeholder="ul. Adres 1, 00-000 Miasto" />
+                    <label for="address" class="form-label">Adres</label>
+                    <input type="text" id="address" name="address" class="form-control" value="@Model.Address" placeholder="ul. Adres 1, 00-000 Miasto" />
                     <span asp-validation-for="Address" class="text-danger"></span>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label asp-for="PhoneNumber" class="form-label">Telefon</label>
-                            <input asp-for="PhoneNumber" class="form-control" placeholder="+48 12 345 67 89" />
+                            <label for="phoneNumber" class="form-label">Telefon</label>
+                            <input type="text" id="phoneNumber" name="phoneNumber" class="form-control" value="@Model.PhoneNumber" placeholder="+48 12 345 67 89" />
                             <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label asp-for="Email" class="form-label">Email</label>
-                            <input asp-for="Email" class="form-control" type="email" placeholder="contact@company.com" />
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" value="@Model.Email" placeholder="contact@company.com" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group mb-3">
-                    <label asp-for="Website" class="form-label">Strona www</label>
-                    <input asp-for="Website" class="form-control" placeholder="https://example.com" />
+                    <label for="website" class="form-label">Strona www</label>
+                    <input type="text" id="website" name="website" class="form-control" value="@Model.Website" placeholder="https://example.com" />
                     <span asp-validation-for="Website" class="text-danger"></span>
                 </div>
 
                 <div class="form-group mb-3">
-                    <label asp-for="LogoUrl" class="form-label">URL logo</label>
-                    <input asp-for="LogoUrl" class="form-control" placeholder="https://example.com/logo.png" />
+                    <label for="logoUrl" class="form-label">URL logo</label>
+                    <input type="text" id="logoUrl" name="logoUrl" class="form-control" value="@Model.LogoUrl" placeholder="https://example.com/logo.png" />
                     <span asp-validation-for="LogoUrl" class="text-danger"></span>
                 </div>
 

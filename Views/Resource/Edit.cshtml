@@ -6,38 +6,39 @@
 <h2>Edytuj zasób</h2>
 
 <form method="post" class="mt-4">
+    @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
     
-    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="id" value="@Model.Id" />
 
     <div class="mb-3">
-        <label asp-for="Name" class="form-label">Nazwa</label>
-        <input asp-for="Name" class="form-control" />
+        <label for="name" class="form-label">Nazwa</label>
+        <input type="text" id="name" name="name" class="form-control" value="@Model.Name" required />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="ResourceType" class="form-label">Typ zasobu</label>
-        <select asp-for="ResourceType" class="form-control">
-            <option value="0">-- Wybierz typ --</option>
-            <option value="1">Restauracja</option>
-            <option value="2">Kino</option>
-            <option value="3">Biuro</option>
-            <option value="4">Sala konferencji</option>
-            <option value="5">Teatr</option>
+        <label for="resourceType" class="form-label">Typ zasobu</label>
+        <select id="resourceType" name="resourceType" class="form-control">
+            <option value="0" @(Model.ResourceType == UniversalReservationMVC.Models.ResourceType.Restaurant ? "selected" : "")>Restauracja</option>
+            <option value="1" @(Model.ResourceType == UniversalReservationMVC.Models.ResourceType.Cinema ? "selected" : "")>Kino</option>
+            <option value="2" @(Model.ResourceType == UniversalReservationMVC.Models.ResourceType.Office ? "selected" : "")>Biuro</option>
+            <option value="3" @(Model.ResourceType == UniversalReservationMVC.Models.ResourceType.ConferenceRoom ? "selected" : "")>Sala konferencji</option>
+            <option value="4" @(Model.ResourceType == UniversalReservationMVC.Models.ResourceType.Theatre ? "selected" : "")>Teatr</option>
+            <option value="5" @(Model.ResourceType == UniversalReservationMVC.Models.ResourceType.Desk ? "selected" : "")>Biurko/Miejsce</option>
         </select>
         <span asp-validation-for="ResourceType" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="Location" class="form-label">Lokalizacja</label>
-        <input asp-for="Location" class="form-control" />
+        <label for="location" class="form-label">Lokalizacja</label>
+        <input type="text" id="location" name="location" class="form-control" value="@Model.Location" />
         <span asp-validation-for="Location" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="Description" class="form-label">Opis</label>
-        <textarea asp-for="Description" class="form-control"></textarea>
+        <label for="description" class="form-label">Opis</label>
+        <textarea id="description" name="description" class="form-control">@Model.Description</textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 

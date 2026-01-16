@@ -47,8 +47,12 @@ namespace UniversalReservationMVC.Controllers
             var userId = User.GetCurrentUserId();
             if (userId == null)
             {
+                _logger.LogWarning("Dashboard access denied: userId is null");
                 return Forbid();
             }
+
+            var isOwner = User.IsInRole("Owner");
+            _logger.LogInformation("User {UserId} accessing Dashboard. IsInRole(Owner): {IsOwner}", userId, isOwner);
 
             var company = await _companyService.GetCompanyByOwnerAsync(userId);
 
@@ -136,57 +140,76 @@ namespace UniversalReservationMVC.Controllers
                 return NotFound();
             }
 
+            _logger.LogInformation("Edit GET: Returning company {CompanyId} with name '{Name}'", 
+                company.Id, company.Name);
+
             return View(company);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Company company)
+        public async Task<IActionResult> Edit(string name, string? description, string? address, 
+            string? phoneNumber, string? email, string? website, string? logoUrl)
         {
             var userId = User.GetCurrentUserId();
-
+            
             if (userId == null)
             {
+                _logger.LogWarning("Edit POST denied: userId is null");
                 return Forbid();
             }
 
-            // Authorize: user can only edit their own company
-            if (!await _companyService.UserIsCompanyOwnerAsync(userId, company.Id))
+            // Pobierz firmę użytkownika z bazy
+            var existingCompany = await _companyService.GetCompanyByOwnerAsync(userId);
+            if (existingCompany == null)
             {
-                return Forbid();
+                _logger.LogWarning("Edit POST: Company not found for owner {UserId}", userId);
+                return NotFound("Nie znaleziono firmy dla tego użytkownika.");
             }
 
-            if (ModelState.IsValid)
+            _logger.LogInformation("Edit POST: UserId={UserId}, CompanyId={CompanyId}, InputName='{InputName}'", 
+                userId, existingCompany.Id, name ?? "NULL");
+
+            // Waliduj tylko pola które chcemy zaktualizować
+            if (string.IsNullOrWhiteSpace(name) || name.Length < 2 || name.Length > 200)
             {
-                try
-                {
-                    var existingCompany = await _companyService.GetCompanyByIdAsync(company.Id);
-                    if (existingCompany == null)
-                    {
-                        return NotFound();
-                    }
-
-                    existingCompany.Name = company.Name;
-                    existingCompany.Description = company.Description;
-                    existingCompany.Address = company.Address;
-                    existingCompany.PhoneNumber = company.PhoneNumber;
-                    existingCompany.Email = company.Email;
-                    existingCompany.Website = company.Website;
-                    existingCompany.LogoUrl = company.LogoUrl;
-                    existingCompany.UpdatedAt = DateTime.UtcNow;
-
-                    await _companyService.UpdateCompanyAsync(existingCompany);
-                    _logger.LogInformation("Company updated: {CompanyId}", company.Id);
-                    return RedirectToAction("Dashboard");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error updating company");
-                    ModelState.AddModelError("", "Błąd przy aktualizacji firmy.");
-                }
+                _logger.LogWarning("Company edit failed: Invalid Name");
+                ModelState.AddModelError("Name", "Nazwa firmy musi zawierać od 2 do 200 znaków");
+                return View(existingCompany);
             }
 
-            return View(company);
+            try
+            {
+                // Aktualizuj tylko edytowalne pola
+                existingCompany.Name = name;
+                existingCompany.Description = description;
+                existingCompany.Address = address;
+                existingCompany.PhoneNumber = phoneNumber;
+                existingCompany.Email = email;
+                existingCompany.Website = website;
+                existingCompany.LogoUrl = logoUrl;
+                existingCompany.UpdatedAt = DateTime.UtcNow;
+
+                await _companyService.UpdateCompanyAsync(existingCompany);
+                _logger.LogInformation("Company {CompanyId} updated by user {UserId}. Redirecting to Dashboard.", 
+                    existingCompany.Id, userId);
+                TempData["Success"] = "Dane firmy zostały zaktualizowane.";
+                
+                // Sprawdź czy użytkownik nadal ma rolę Owner przed przekierowaniem
+                if (!User.IsInRole("Owner"))
+                {
+                    _logger.LogError("User {UserId} lost Owner role after update!", userId);
+                    return RedirectToAction("Index", "Home");
+                }
+                
+                return RedirectToAction("Dashboard", "Company");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating company");
+                ModelState.AddModelError("", "Błąd przy aktualizacji firmy.");
+                return View(existingCompany);
+            }
         }
 
         // Manage resources (rooms/workspaces)
@@ -227,8 +250,12 @@ namespace UniversalReservationMVC.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Niepoprawne dane zasobu.";
-                return RedirectToAction("Resources");
+                var errors = string.Join("; ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+                _logger.LogWarning("Resource creation failed. Validation errors: {Errors}", errors);
+                TempData["Error"] = $"Niepoprawne dane zasobu: {errors}";
+                return BadRequest(new { message = "Niepoprawne dane zasobu", errors = errors });
             }
 
             resource.CompanyId = company.Id;
@@ -265,7 +292,25 @@ namespace UniversalReservationMVC.Controllers
                 return NotFound();
             }
 
-            return View(resource);
+            // Create ViewModel without circular references
+            var viewModel = new SeatMapBuilderViewModel
+            {
+                Id = resource.Id,
+                Name = resource.Name,
+                Location = resource.Location,
+                SeatMapWidth = resource.SeatMapWidth ?? 10,
+                SeatMapHeight = resource.SeatMapHeight ?? 10,
+                Seats = resource.Seats?.Select(s => new SeatDto
+                {
+                    Id = s.Id,
+                    X = s.X,
+                    Y = s.Y,
+                    Label = s.Label ?? "",
+                    Status = s.IsAvailable ? "available" : "unavailable"
+                }).ToList() ?? new List<SeatDto>()
+            };
+
+            return View(viewModel);
         }
 
         // Manage company members
@@ -528,57 +573,68 @@ namespace UniversalReservationMVC.Controllers
 
         // API endpoint to save/update seat map
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveSeatMap(int resourceId, [FromBody] List<SeatData> seats)
+        public async Task<IActionResult> SaveSeatMap([FromBody] SaveSeatMapRequest request)
         {
+            _logger.LogInformation("SaveSeatMap called with resourceId={ResourceId}, seats count={Count}", 
+                request?.ResourceId ?? 0, request?.Seats?.Count ?? 0);
+
             var userId = User.GetCurrentUserId();
             if (userId == null)
             {
-                return Forbid();
+                return Json(new { success = false, message = "Użytkownik niezalogowany." });
             }
 
             var company = await _companyService.GetCompanyByOwnerAsync(userId);
-
             if (company == null)
             {
-                return Forbid();
+                return Json(new { success = false, message = "Firma nie znaleziona." });
             }
 
-            var resource = company.Resources?.FirstOrDefault(r => r.Id == resourceId);
+            if (request == null || request.ResourceId == 0)
+            {
+                return Json(new { success = false, message = "Brak ID zasobu." });
+            }
+
+            var resource = company.Resources?.FirstOrDefault(r => r.Id == request.ResourceId);
             if (resource == null)
             {
-                return NotFound();
+                return Json(new { success = false, message = $"Zasób {request.ResourceId} nie znaleziony." });
             }
 
-            if (seats == null)
+            if (request.Seats == null || !request.Seats.Any())
             {
                 return Json(new { success = false, message = "Brak danych miejsc." });
             }
 
             try
             {
-                var seatModels = seats.Select(s => new Seat
+                var seatModels = request.Seats.Select(s => new Seat
                 {
                     X = s.X,
                     Y = s.Y,
-                    Label = s.Label,
+                    Label = s.Label ?? $"{s.X},{s.Y}",
+                    ResourceId = request.ResourceId,
                     IsAvailable = !string.Equals(s.Status, "unavailable", StringComparison.OrdinalIgnoreCase)
                 }).ToList();
 
-                if (!seatModels.Any())
-                {
-                    return Json(new { success = false, message = "Mapa miejsc jest pusta." });
-                }
-
-                await _seatMapService.SaveSeatMapAsync(resourceId, seatModels);
+                await _seatMapService.SaveSeatMapAsync(request.ResourceId, seatModels);
+                
+                _logger.LogInformation("Seat map saved for resource {ResourceId}, {SeatCount} seats", 
+                    request.ResourceId, seatModels.Count);
 
                 return Json(new { success = true, message = "Mapa pomieszczeń została zapisana!" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving seat map");
-                return Json(new { success = false, message = ex.Message });
+                _logger.LogError(ex, "Error saving seat map for resource {ResourceId}", request.ResourceId);
+                return Json(new { success = false, message = $"Błąd: {ex.Message}" });
             }
+        }
+
+        public class SaveSeatMapRequest
+        {
+            public int ResourceId { get; set; }
+            public List<SeatData> Seats { get; set; } = new();
         }
 
         // Edit resource
@@ -609,7 +665,8 @@ namespace UniversalReservationMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditResource(int resourceId, Resource resource)
+        public async Task<IActionResult> EditResource(int resourceId, string name, int resourceType, 
+            string? location, string? description, int? capacity, int? seatMapWidth, int? seatMapHeight, decimal price)
         {
             var userId = User.GetCurrentUserId();
             if (userId == null)
@@ -618,20 +675,9 @@ namespace UniversalReservationMVC.Controllers
             }
 
             var company = await _companyService.GetCompanyByOwnerAsync(userId);
-
             if (company == null)
             {
                 return Forbid();
-            }
-
-            if (!company.Resources?.Any(r => r.Id == resourceId) == true)
-            {
-                return NotFound();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return View(resource);
             }
 
             var existing = await _unitOfWork.Resources.GetByIdAsync(resourceId);
@@ -640,13 +686,20 @@ namespace UniversalReservationMVC.Controllers
                 return NotFound();
             }
 
-            existing.Name = resource.Name;
-            existing.Description = resource.Description;
-            existing.Location = resource.Location;
-            existing.ResourceType = resource.ResourceType;
-            existing.Capacity = resource.Capacity;
-            existing.SeatMapHeight = resource.SeatMapHeight;
-            existing.SeatMapWidth = resource.SeatMapWidth;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                ModelState.AddModelError("Name", "Nazwa zasobu jest wymagana");
+                return View(existing);
+            }
+
+            existing.Name = name;
+            existing.Description = description;
+            existing.Location = location;
+            existing.ResourceType = (ResourceType)resourceType;
+            existing.Capacity = capacity;
+            existing.SeatMapHeight = seatMapHeight;
+            existing.SeatMapWidth = seatMapWidth;
+            existing.Price = price;
             existing.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Resources.Update(existing);
@@ -662,9 +715,12 @@ namespace UniversalReservationMVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteResource(int resourceId)
         {
+            _logger.LogInformation("DeleteResource called with resourceId={ResourceId}", resourceId);
+            
             var userId = User.GetCurrentUserId();
             if (userId == null)
             {
+                _logger.LogWarning("DeleteResource: userId is null");
                 return Forbid();
             }
 

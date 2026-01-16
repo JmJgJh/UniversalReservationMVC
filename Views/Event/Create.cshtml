@@ -6,42 +6,43 @@
 <h2>Utwórz nowe wydarzenie</h2>
 
 <form method="post" class="mt-4">
+    @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
     
     <div class="mb-3">
-        <label asp-for="Title" class="form-label">Tytuł</label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
+        <label for="title" class="form-label">Tytuł</label>
+        <input type="text" id="title" name="title" class="form-control" required />
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="ResourceId" class="form-label">Zasób</label>
-        <select asp-for="ResourceId" class="form-control">
+        <label for="resourceId" class="form-label">Zasób</label>
+        <select id="resourceId" name="resourceId" class="form-control">
             <option value="">-- Wybierz zasób --</option>
             @foreach (var res in ViewBag.Resources)
             {
                 <option value="@res.Id">@res.Name</option>
             }
         </select>
-        <span asp-validation-for="ResourceId" class="text-danger"></span>
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="StartTime" class="form-label">Początek</label>
-        <input asp-for="StartTime" type="datetime-local" class="form-control" />
-        <span asp-validation-for="StartTime" class="text-danger"></span>
+        <label for="startTime" class="form-label">Początek</label>
+        <input type="datetime-local" id="startTime" name="startTime" class="form-control" required />
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="EndTime" class="form-label">Koniec</label>
-        <input asp-for="EndTime" type="datetime-local" class="form-control" />
-        <span asp-validation-for="EndTime" class="text-danger"></span>
+        <label for="endTime" class="form-label">Koniec</label>
+        <input type="datetime-local" id="endTime" name="endTime" class="form-control" required />
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="Description" class="form-label">Opis</label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
+        <label for="description" class="form-label">Opis</label>
+        <textarea id="description" name="description" class="form-control"></textarea>
+        <span class="text-danger"></span>
     </div>
 
     <!-- Recurrence Settings -->

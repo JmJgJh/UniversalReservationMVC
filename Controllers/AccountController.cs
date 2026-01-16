@@ -180,11 +180,16 @@ namespace UniversalReservationMVC.Controllers
                     var company = new Company
                     {
                         Name = model.CompanyName ?? "",
+                        Description = model.CompanyDescription,
+                        Address = model.CompanyAddress,
+                        PhoneNumber = model.CompanyPhone,
+                        Email = model.CompanyEmail,
                         OwnerId = user.Id,
                         CreatedAt = DateTime.UtcNow,
                         IsActive = true
                     };
                     await _companyService.CreateCompanyAsync(company);
+                    _logger.LogInformation("Company '{CompanyName}' created for user {UserId}", company.Name, user.Id);
                 }
 
                 await _signInManager.SignInAsync(user, false);

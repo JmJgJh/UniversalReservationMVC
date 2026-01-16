@@ -102,7 +102,11 @@ namespace UniversalReservationMVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-            Event model, 
+            string title,
+            int resourceId,
+            DateTime startTime,
+            DateTime endTime,
+            string? description,
             int RecurrenceType, 
             int? RecurrenceInterval, 
             List<int>? DaysOfWeek,
@@ -110,55 +114,68 @@ namespace UniversalReservationMVC.Controllers
             DateTime? RecurrenceEndDate,
             int? MaxOccurrences)
         {
-            if (ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(title))
             {
-                try
-                {
-                    var ev = await _eventService.CreateEventAsync(model);
+                ModelState.AddModelError("Title", "Tytuł jest wymagany");
+                ViewBag.Resources = await _db.Resources.ToListAsync();
+                return View();
+            }
 
-                    // If recurrence pattern is specified, create it
-                    if (RecurrenceType > 0 && ev != null)
+            var model = new Event
+            {
+                Title = title,
+                ResourceId = resourceId,
+                StartTime = startTime,
+                EndTime = endTime,
+                Description = description
+            };
+
+            try
+            {
+                var ev = await _eventService.CreateEventAsync(model);
+
+                // If recurrence pattern is specified, create it
+                if (RecurrenceType > 0 && ev != null)
+                {
+                    var pattern = new RecurrencePattern
                     {
-                        var pattern = new RecurrencePattern
-                        {
-                            EventId = ev.Id,
-                            Type = (RecurrenceType)RecurrenceType,
-                            Interval = RecurrenceInterval ?? 1,
-                            DaysOfWeek = DaysOfWeek != null && DaysOfWeek.Any() 
-                                ? System.Text.Json.JsonSerializer.Serialize(DaysOfWeek) 
-                                : null,
-                            DayOfMonth = DayOfMonth,
-                            EndDate = RecurrenceEndDate,
-                            MaxOccurrences = MaxOccurrences
-                        };
+                        EventId = ev.Id,
+                        Type = (RecurrenceType)RecurrenceType,
+                        Interval = RecurrenceInterval ?? 1,
+                        DaysOfWeek = DaysOfWeek != null && DaysOfWeek.Any() 
+                            ? System.Text.Json.JsonSerializer.Serialize(DaysOfWeek) 
+                            : null,
+                        DayOfMonth = DayOfMonth,
+                        EndDate = RecurrenceEndDate,
+                        MaxOccurrences = MaxOccurrences
+                    };
 
-                        _db.RecurrencePatterns.Add(pattern);
-                        await _db.SaveChangesAsync();
+                    _db.RecurrencePatterns.Add(pattern);
+                    await _db.SaveChangesAsync();
 
-                        // Generate occurrences (save to DB or generate on-the-fly)
-                        var occurrences = await _recurrenceService.GenerateOccurrencesAsync(ev, pattern);
-                        _db.Events.AddRange(occurrences);
-                        await _db.SaveChangesAsync();
+                    // Generate occurrences (save to DB or generate on-the-fly)
+                    var occurrences = await _recurrenceService.GenerateOccurrencesAsync(ev, pattern);
+                    _db.Events.AddRange(occurrences);
+                    await _db.SaveChangesAsync();
 
-                        _logger.LogInformation("Created recurring event {EventId} with {Count} occurrences", 
-                            ev.Id, occurrences.Count);
-                    }
-
-                    TempData["SuccessMessage"] = RecurrenceType > 0 
-                        ? "Wydarzenie cykliczne zostało utworzone!" 
-                        : "Wydarzenie zostało utworzone!";
-                    
-                    return RedirectToAction(nameof(Index));
+                    _logger.LogInformation("Created recurring event {EventId} with {Count} occurrences", 
+                        ev.Id, occurrences.Count);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating event with recurrence");
-                    ModelState.AddModelError("", "Wystąpił błąd podczas tworzenia wydarzenia");
-                }
+
+                TempData["SuccessMessage"] = RecurrenceType > 0 
+                    ? "Wydarzenie cykliczne zostało utworzone!" 
+                    : "Wydarzenie zostało utworzone!";
+                
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating event with recurrence");
+                ModelState.AddModelError("", "Wystąpił błąd podczas tworzenia wydarzenia");
             }
             
             ViewBag.Resources = await _db.Resources.ToListAsync();
-            return View(model);
+            return View();
         }
 
         [Authorize(Roles = "Admin,Owner")]

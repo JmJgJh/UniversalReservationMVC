@@ -46,15 +46,25 @@ namespace UniversalReservationMVC.Controllers
         [Authorize(Roles = "Admin,Owner")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Resource model)
+        public async Task<IActionResult> Create(string name, int resourceType, string? location, string? description)
         {
-            if (ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(name))
             {
-                _db.Resources.Add(model);
-                await _db.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("Name", "Nazwa zasobu jest wymagana");
+                return View();
             }
-            return View(model);
+
+            var model = new Resource
+            {
+                Name = name,
+                ResourceType = (ResourceType)resourceType,
+                Location = location,
+                Description = description
+            };
+
+            _db.Resources.Add(model);
+            await _db.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         [Authorize(Roles = "Admin,Owner")]
@@ -69,25 +79,34 @@ namespace UniversalReservationMVC.Controllers
         [Authorize(Roles = "Admin,Owner")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Resource model)
+        public async Task<IActionResult> Edit(int id, string name, int resourceType, string? location, string? description)
         {
-            if (id != model.Id) return NotFound();
+            var resource = await _db.Resources.FindAsync(id);
+            if (resource == null) return NotFound();
 
-            if (ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(name))
             {
-                try
-                {
-                    _db.Resources.Update(model);
-                    await _db.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!await ResourceExists(id)) return NotFound();
-                    throw;
-                }
+                ModelState.AddModelError("Name", "Nazwa zasobu jest wymagana");
+                return View(resource);
+            }
+
+            try
+            {
+                resource.Name = name;
+                resource.ResourceType = (ResourceType)resourceType;
+                resource.Location = location;
+                resource.Description = description;
+                
+                _db.Resources.Update(resource);
+                await _db.SaveChangesAsync();
+                
                 return RedirectToAction(nameof(Index));
             }
-            return View(model);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await ResourceExists(id)) return NotFound();
+                throw;
+            }
         }
 
         [Authorize(Roles = "Admin,Owner")]

@@ -12,7 +12,8 @@ namespace UniversalReservationMVC.Repositories
         {
             return await _context.Companies
                 .Include(c => c.Owner)
-                .Include(c => c.Resources)
+                .Include(c => c.Resources!)
+                    .ThenInclude(r => r.Seats)
                 .FirstOrDefaultAsync(c => c.OwnerId == ownerId && c.IsActive);
         }
 

@@ -6,7 +6,8 @@ namespace UniversalReservationMVC.Models
         Cinema,
         Office,
         ConferenceRoom,
-        Theatre
+        Theatre,
+        Desk
     }
 
     public enum ReservationStatus

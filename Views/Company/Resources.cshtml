@@ -56,7 +56,7 @@
                                 Edytuj mapę
                             </a>
                             <a href="@Url.Action("EditResource", "Company", new { resourceId = resource.Id })" class="btn btn-sm btn-outline-secondary">Edytuj</a>
-                            <form asp-action="DeleteResource" asp-controller="Company" method="post" class="d-inline" onsubmit="return confirm('Usunąć zasób?');">
+                            <form method="post" action="@Url.Action("DeleteResource", "Company")" class="d-inline" onsubmit="return confirm('Usunąć zasób?');">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="resourceId" value="@resource.Id" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger">Usuń</button>
@@ -88,10 +88,12 @@
                         <label class="form-label">Typ zasobu</label>
                         <select name="ResourceType" class="form-select" required>
                             <option value="">-- Wybierz typ --</option>
-                            <option value="0">Sala konferencji</option>
-                            <option value="1">Stanowisko pracy</option>
-                            <option value="2">Sala szkoleniowa</option>
-                            <option value="3">Inne</option>
+                            <option value="0">Restauracja</option>
+                            <option value="1">Kino</option>
+                            <option value="2">Biuro</option>
+                            <option value="3">Sala konferencyjna</option>
+                            <option value="4">Teatr</option>
+                            <option value="5">Biurko/Miejsce</option>
                         </select>
                     </div>
                     <div class="form-group mb-3">

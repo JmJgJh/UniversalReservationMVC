@@ -6,37 +6,38 @@
 <h2>Utwórz nowy zasób</h2>
 
 <form method="post" class="mt-4">
+    @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
     
     <div class="mb-3">
-        <label asp-for="Name" class="form-label">Nazwa</label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+        <label for="name" class="form-label">Nazwa</label>
+        <input type="text" id="name" name="name" class="form-control" required />
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="ResourceType" class="form-label">Typ zasobu</label>
-        <select asp-for="ResourceType" class="form-control">
-            <option value="0">-- Wybierz typ --</option>
-            <option value="1">Restauracja</option>
-            <option value="2">Kino</option>
-            <option value="3">Biuro</option>
-            <option value="4">Sala konferencji</option>
-            <option value="5">Teatr</option>
+        <label for="resourceType" class="form-label">Typ zasobu</label>
+        <select id="resourceType" name="resourceType" class="form-control">
+            <option value="0">Restauracja</option>
+            <option value="1">Kino</option>
+            <option value="2">Biuro</option>
+            <option value="3">Sala konferencji</option>
+            <option value="4">Teatr</option>
+            <option value="5">Biurko/Miejsce</option>
         </select>
-        <span asp-validation-for="ResourceType" class="text-danger"></span>
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="Location" class="form-label">Lokalizacja</label>
-        <input asp-for="Location" class="form-control" />
-        <span asp-validation-for="Location" class="text-danger"></span>
+        <label for="location" class="form-label">Lokalizacja</label>
+        <input type="text" id="location" name="location" class="form-control" />
+        <span class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="Description" class="form-label">Opis</label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
+        <label for="description" class="form-label">Opis</label>
+        <textarea id="description" name="description" class="form-control"></textarea>
+        <span class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary">Utwórz</button>
