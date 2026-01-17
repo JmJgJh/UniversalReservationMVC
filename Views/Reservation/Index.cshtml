@@ -30,9 +30,18 @@
                         <div class="fw-bold">Rząd: <span class="text-primary">@s.X</span></div>
                         <div class="fw-bold">Miejsce: <span class="text-primary">@s.Y</span></div>
                     </div>
-                    <a class="btn btn-primary w-100" href="/Reservation/Create?resourceId=@resourceId&seatId=@s.Id">
-                        <i class="fas fa-ticket-alt me-1"></i>Rezerwuj
-                    </a>
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <a class="btn btn-primary w-100" href="@Url.Action("Create", "Reservation", new { resourceId, seatId = s.Id })">
+                            <i class="fas fa-ticket-alt me-1"></i>Rezerwuj
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary w-100" href="@Url.Action("GuestCreate", "Reservation", new { resourceId, seatId = s.Id })">
+                            <i class="fas fa-ticket-alt me-1"></i>Rezerwuj jako gość
+                        </a>
+                    }
                 </div>
             </div>
         </div>

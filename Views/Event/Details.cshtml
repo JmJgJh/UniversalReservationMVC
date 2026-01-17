@@ -45,8 +45,14 @@
                     <p class="lead text-white-75 mb-4">@shortDescription</p>
                     <div class="d-flex flex-wrap gap-2">
                         <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.ResourceId })" class="btn btn-light text-dark shadow-sm"><i class="fas fa-chair me-1"></i>Wybierz miejsce</a>
-                        <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-user-check me-1"></i>Zarezerwuj (logowanie)</a>
-                        <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-user me-1"></i>Gość</a>
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-user-check me-1"></i>Zarezerwuj</a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-user me-1"></i>Rezerwuj jako gość</a>
+                        }
                         <a href="@Url.Action("GetSeatMap", "Seat", new { resourceId = Model.ResourceId, eventId = Model.Id })" class="btn btn-outline-light"><i class="fas fa-map me-1"></i>Mapa miejsc</a>
                         @if (ViewBag.UserReservationId != null)
                         {

@@ -65,17 +65,37 @@
                     <h5 class="mb-0">Akcje</h5>
                 </div>
                 <div class="card-body">
-                    <div class="btn-group" role="group">
-                        <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.Id })" class="btn btn-primary">
-                            <i class="bi bi-calendar-check"></i> Rezerwuj
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Index", "Reservation", new { resourceId = Model.Id })" class="btn btn-primary btn-lg">
+                            <i class="bi bi-calendar-check"></i> Zobacz dostępne miejsca i rezerwuj
                         </a>
+                        
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <a href="@Url.Action("Create", "Reservation", new { resourceId = Model.Id })" class="btn btn-outline-primary">
+                                <i class="bi bi-person-check"></i> Szybka rezerwacja (zalogowany)
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("GuestCreate", "Reservation", new { resourceId = Model.Id })" class="btn btn-outline-primary">
+                                <i class="bi bi-person"></i> Rezerwacja dla gościa
+                            </a>
+                            <a href="@Url.Action("Login", "Account", new { returnUrl = Url.Action("Create", "Reservation", new { resourceId = Model.Id }) })" class="btn btn-outline-secondary">
+                                <i class="bi bi-box-arrow-in-right"></i> Zaloguj się aby zarezerwować
+                            </a>
+                        }
+                        
+                        <hr class="my-2" />
+                        
                         <a href="@Url.Action("Index", "Resource")" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Wróć do listy
+                            <i class="bi bi-arrow-left"></i> Wróć do listy zasobów
                         </a>
+                        
                         @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
                         {
                             <a href="@Url.Action("Edit", "Resource", new { id = Model.Id })" class="btn btn-warning">
-                                <i class="bi bi-pencil"></i> Edytuj
+                                <i class="bi bi-pencil"></i> Edytuj zasób
                             </a>
                         }
                     </div>

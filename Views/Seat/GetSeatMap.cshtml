@@ -24,9 +24,36 @@
     </div>
 
     <!-- Wybrane miejsca -->
-    <div class="selected-seats mt-3">
-        <h5>Wybrane miejsca:</h5>
-        <ul id="selectedSeatsList" class="list-group"></ul>
+    <div class="selected-seats mt-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> Wybrane miejsca</h5>
+            </div>
+            <div class="card-body">
+                <ul id="selectedSeatsList" class="list-group mb-3"></ul>
+                
+                <div id="reservationActions" class="d-none">
+                    <hr />
+                    <div class="d-grid gap-2">
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <button id="btnReserveAuth" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Zarezerwuj wybrane miejsca
+                            </button>
+                        }
+                        else
+                        {
+                            <button id="btnReserveGuest" class="btn btn-success btn-lg">
+                                <i class="bi bi-person"></i> Zarezerwuj jako gość
+                            </button>
+                            <a href="@Url.Action("Login", "Account", new { returnUrl = Url.Action("GetSeatMap", "Seat") })" class="btn btn-outline-primary">
+                                <i class="bi bi-box-arrow-in-right"></i> Zaloguj się
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -56,15 +83,22 @@
 
     function updateSelectedList() {
         selectedSeatsList.innerHTML = '';
+        const reservationActions = document.getElementById('reservationActions');
+        
         if (selectedSeats.size === 0) {
-            selectedSeatsList.innerHTML = '<li class="list-group-item">Brak wybranych miejsc</li>';
+            selectedSeatsList.innerHTML = '<li class="list-group-item text-muted">Brak wybranych miejsc - kliknij na dostępne miejsca powyżej</li>';
+            reservationActions.classList.add('d-none');
         } else {
             selectedSeats.forEach(label => {
                 const li = document.createElement('li');
-                li.className = 'list-group-item';
-                li.textContent = label;
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i>${label}</span>
+                    <span class="badge bg-success">Wybrane</span>
+                `;
                 selectedSeatsList.appendChild(li);
             });
+            reservationActions.classList.remove('d-none');
         }
     }
 
@@ -103,6 +137,42 @@
             label.textContent = seat.label;
             div.appendChild(label);
 
+
+    // Obsługa przycisków rezerwacji
+    const btnReserveAuth = document.getElementById('btnReserveAuth');
+    const btnReserveGuest = document.getElementById('btnReserveGuest');
+    const resourceId = @(ViewBag.ResourceId ?? 0);
+    const eventId = @(ViewBag.EventId ?? "null");
+
+    if (btnReserveAuth) {
+        btnReserveAuth.addEventListener('click', () => {
+            if (selectedSeats.size === 0) {
+                alert('Proszę wybrać co najmniej jedno miejsce');
+                return;
+            }
+            // Przekieruj do formularza rezerwacji z pierwszym wybranym miejscem
+            const firstSeat = Array.from(selectedSeats)[0];
+            const seatData = seats.find(s => s.label === firstSeat);
+            let url = `/Reservation/Create?resourceId=${resourceId}&seatId=${seatData.id}`;
+            if (eventId) url += `&eventId=${eventId}`;
+            window.location.href = url;
+        });
+    }
+
+    if (btnReserveGuest) {
+        btnReserveGuest.addEventListener('click', () => {
+            if (selectedSeats.size === 0) {
+                alert('Proszę wybrać co najmniej jedno miejsce');
+                return;
+            }
+            // Przekieruj do formularza rezerwacji gościa z pierwszym wybranym miejscem
+            const firstSeat = Array.from(selectedSeats)[0];
+            const seatData = seats.find(s => s.label === firstSeat);
+            let url = `/Reservation/GuestCreate?resourceId=${resourceId}&seatId=${seatData.id}`;
+            if (eventId) url += `&eventId=${eventId}`;
+            window.location.href = url;
+        });
+    }
             seatGrid.appendChild(div);
         });
 

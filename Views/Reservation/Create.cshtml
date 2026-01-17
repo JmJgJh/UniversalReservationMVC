@@ -17,7 +17,13 @@
                 </div>
             }
 
-            @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Błędy walidacji</h5>
+                    @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                </div>
+            }
 
             <!-- Alert o wybranym miejscu -->
             <div id="seatSelectedAlert" class="alert alert-success d-none mb-4" role="alert">

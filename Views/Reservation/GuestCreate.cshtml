@@ -12,13 +12,23 @@
             @if (ViewBag.ResourceName != null)
             {
                 <div class="alert alert-info">
-                    <strong>Zasób:</strong> @ViewBag.ResourceName
+                    <i class="fas fa-door-open me-2"></i><strong>Zasób:</strong> @ViewBag.ResourceName
+                    @if (ViewBag.SeatLabel != null)
+                    {
+                        <br/><i class="fas fa-chair me-2"></i><strong>Miejsce:</strong> @ViewBag.SeatLabel
+                    }
                 </div>
             }
 
-            @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Błędy walidacji</h5>
+                    @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                </div>
+            }
 
-            <form method="post">
+            <form asp-action="GuestCreate" method="post">
                 @Html.AntiForgeryToken()
 
                 <input type="hidden" asp-for="ResourceId" />
@@ -26,29 +36,48 @@
                 <input type="hidden" asp-for="EventId" />
                 <input type="hidden" asp-for="ReturnUrl" />
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Adres e-mail</label>
-                        <input type="email" class="form-control" asp-for="Email" required placeholder="twoj@email.com" />
-                        <span class="invalid-feedback" asp-validation-for="Email"></span>
+                <div class="card shadow mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Dane kontaktowe</h5>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Numer telefonu</label>
-                        <input type="tel" class="form-control" asp-for="Phone" required placeholder="+48 123 456 789" />
-                        <span class="invalid-feedback" asp-validation-for="Phone"></span>
+                    <div class="card-body">
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Podaj co najmniej adres e-mail lub numer telefonu
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input type="email" class="form-control" asp-for="Email" name="Email" id="Email" placeholder="twoj@email.com" />
+                                <span class="text-danger" asp-validation-for="Email"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Phone" class="form-label"></label>
+                                <input type="tel" class="form-control" asp-for="Phone" name="Phone" id="Phone" placeholder="+48 123 456 789" />
+                                <span class="text-danger" asp-validation-for="Phone"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Data i godzina rozpoczęcia</label>
-                    <input type="datetime-local" class="form-control" asp-for="StartTime" required />
-                    <span class="invalid-feedback" asp-validation-for="StartTime"></span>
-                </div>
+                <div class="card shadow mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Termin rezerwacji</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartTime" class="form-label"></label>
+                                <input type="datetime-local" class="form-control" asp-for="StartTime" name="StartTime" id="StartTime" required />
+                                <span class="text-danger" asp-validation-for="StartTime"></span>
+                            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Data i godzina zakończenia</label>
-                    <input type="datetime-local" class="form-control" asp-for="EndTime" required />
-                    <span class="invalid-feedback" asp-validation-for="EndTime"></span>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EndTime" class="form-label"></label>
+                                <input type="datetime-local" class="form-control" asp-for="EndTime" name="EndTime" id="EndTime" required />
+                                <span class="text-danger" asp-validation-for="EndTime"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="alert alert-warning">

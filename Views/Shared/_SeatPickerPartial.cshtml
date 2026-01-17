@@ -59,7 +59,7 @@
         }
         
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/seatHub")
+            .withUrl("/hubs/seat")
             .build();
 
         connection.on("SeatReserved", function (data) {
@@ -79,7 +79,7 @@
         });
 
         connection.start()
-            .then(() => connection.invoke("JoinResourceGroup", resourceId.toString()))
+            .then(() => connection.invoke("JoinResource", resourceId.toString()))
             .catch(err => console.error('SignalR connection error:', err));
     }
 
