@@ -1,9 +1,27 @@
 @model IEnumerable<UniversalReservationMVC.Models.Reservation>
 @{
     ViewData["Title"] = "Moje rezerwacje";
+    var newReservationId = TempData["NewReservationId"] as int?;
 }
 
 <h1>Moje rezerwacje</h1>
+
+@if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        @if (newReservationId.HasValue)
+        {
+            <div class="mt-2">
+                <a href="@Url.Action("Ticket", "Reservation", new { id = newReservationId })" 
+                   class="btn btn-sm btn-primary">
+                    <i class="fas fa-ticket-alt me-1"></i>Zobacz bilet z kodem QR
+                </a>
+            </div>
+        }
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <div class="table-responsive">
     <table class="table table-striped">
@@ -25,11 +43,15 @@
                     <td>@item.EndTime.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@item.Status</td>
                     <td>
+                        <a href="@Url.Action("Ticket", "Reservation", new { id = item.Id })" 
+                           class="btn btn-sm btn-primary me-2">
+                            <i class="fas fa-ticket-alt me-1"></i>Bilet
+                        </a>
                         @if (item.Status != UniversalReservationMVC.Models.ReservationStatus.Cancelled)
                         {
                             <form method="post" action="@Url.Action("Cancel", "Reservation", new { id = item.Id })" style="display:inline;">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Na pewno anulować rezerwację?')">Anuluj rezerwację</button>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Na pewno anulować rezerwację?')">Anuluj</button>
                             </form>
                         }
                     </td>

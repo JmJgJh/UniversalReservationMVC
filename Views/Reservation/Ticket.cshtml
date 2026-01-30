@@ -1,0 +1,208 @@
+@model UniversalReservationMVC.Models.Reservation
+@{
+    ViewData["Title"] = "Bilet - Potwierdzenie rezerwacji";
+    var qrCodeBase64 = ViewBag.QrCodeBase64 as string;
+    var ticketCode = ViewBag.TicketCode as string;
+    var resourceName = ViewBag.ResourceName as string;
+    var seatLabel = ViewBag.SeatLabel as string;
+    var eventTitle = ViewBag.EventTitle as string;
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Ticket Card -->
+            <div class="card shadow-lg border-0 ticket-card" id="ticketCard">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h2 class="mb-0">
+                        <i class="fas fa-ticket-alt me-2"></i>Bilet / Potwierdzenie rezerwacji
+                    </h2>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Status Badge -->
+                    <div class="text-center mb-4">
+                        @if (Model.Status == UniversalReservationMVC.Models.ReservationStatus.Confirmed)
+                        {
+                            <span class="badge bg-success fs-5 px-4 py-2">
+                                <i class="fas fa-check-circle me-1"></i>POTWIERDZONA
+                            </span>
+                        }
+                        else if (Model.Status == UniversalReservationMVC.Models.ReservationStatus.Pending)
+                        {
+                            <span class="badge bg-warning fs-5 px-4 py-2">
+                                <i class="fas fa-clock me-1"></i>OCZEKUJĄCA
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-5 px-4 py-2">
+                                @Model.Status.ToString().ToUpper()
+                            </span>
+                        }
+                    </div>
+
+                    <div class="row">
+                        <!-- Left Column - Details -->
+                        <div class="col-md-7">
+                            <h4 class="mb-3 border-bottom pb-2">
+                                <i class="fas fa-info-circle text-primary me-2"></i>Szczegóły rezerwacji
+                            </h4>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small mb-1">Numer rezerwacji</label>
+                                <div class="fw-bold fs-5">#@Model.Id</div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(ticketCode))
+                            {
+                                <div class="mb-3">
+                                    <label class="text-muted small mb-1">Kod biletu</label>
+                                    <div class="fw-bold fs-5 font-monospace text-primary">@ticketCode</div>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label class="text-muted small mb-1">Zasób</label>
+                                <div class="fw-bold">
+                                    <i class="fas fa-door-open text-primary me-2"></i>@resourceName
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(seatLabel))
+                            {
+                                <div class="mb-3">
+                                    <label class="text-muted small mb-1">Miejsce</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-chair text-primary me-2"></i>@seatLabel
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(eventTitle))
+                            {
+                                <div class="mb-3">
+                                    <label class="text-muted small mb-1">Wydarzenie</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-calendar-alt text-primary me-2"></i>@eventTitle
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label class="text-muted small mb-1">Okres rezerwacji</label>
+                                <div>
+                                    <div class="mb-1">
+                                        <i class="fas fa-calendar-check text-success me-2"></i>
+                                        <strong>Od:</strong> @Model.StartTime.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-calendar-times text-danger me-2"></i>
+                                        <strong>Do:</strong> @Model.EndTime.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(Model.GuestEmail) || !string.IsNullOrEmpty(Model.GuestPhone))
+                            {
+                                <div class="mb-3">
+                                    <label class="text-muted small mb-1">Dane kontaktowe</label>
+                                    @if (!string.IsNullOrEmpty(Model.GuestEmail))
+                                    {
+                                        <div><i class="fas fa-envelope me-2"></i>@Model.GuestEmail</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.GuestPhone))
+                                    {
+                                        <div><i class="fas fa-phone me-2"></i>@Model.GuestPhone</div>
+                                    }
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label class="text-muted small mb-1">Data utworzenia</label>
+                                <div>
+                                    <i class="fas fa-clock me-2"></i>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column - QR Code -->
+                        <div class="col-md-5 text-center">
+                            <div class="qr-code-container p-3 bg-light rounded">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-qrcode text-primary me-2"></i>Kod QR
+                                </h5>
+                                @if (!string.IsNullOrEmpty(qrCodeBase64))
+                                {
+                                    <img src="data:image/png;base64,@qrCodeBase64" 
+                                         alt="QR Code" 
+                                         class="img-fluid mb-3" 
+                                         style="max-width: 250px; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    <p class="small text-muted mb-0">
+                                        <i class="fas fa-mobile-alt me-1"></i>
+                                        Zeskanuj kod aby zweryfikować bilet
+                                    </p>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Kod QR niedostępny
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Important Notice -->
+                    <div class="alert alert-info mt-4 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Ważne:</strong> Zachowaj ten bilet. Będzie potrzebny przy wejściu. 
+                        Kod QR można zeskanować w celu weryfikacji rezerwacji.
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light text-center py-3">
+                    <button onclick="window.print()" class="btn btn-primary me-2">
+                        <i class="fas fa-print me-2"></i>Drukuj bilet
+                    </button>
+                    <a href="@Url.Action("MyReservations", "Reservation")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Wróć do moich rezerwacji
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .ticket-card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .qr-code-container {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px dashed #dee2e6;
+    }
+    
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #ticketCard, #ticketCard * {
+            visibility: visible;
+        }
+        #ticketCard {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .card-footer {
+            display: none !important;
+        }
+    }
+</style>
+}

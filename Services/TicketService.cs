@@ -1,5 +1,8 @@
 using UniversalReservationMVC.Models;
 using UniversalReservationMVC.Repositories;
+using QRCoder;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace UniversalReservationMVC.Services
 {
@@ -83,6 +86,46 @@ namespace UniversalReservationMVC.Services
         public async Task<Ticket?> GetTicketByIdAsync(int id)
         {
             return await _unitOfWork.Tickets.GetByIdAsync(id);
+        }
+
+        public string GenerateQrCodeForReservation(int reservationId)
+        {
+            try
+            {
+                // Generate ticket verification URL or code
+                var ticketCode = GenerateTicketCode(reservationId, DateTime.UtcNow);
+                var qrContent = $"RESERVATION:{reservationId}|CODE:{ticketCode}|VERIFY:https://localhost/Reservation/Verify/{reservationId}";
+
+                using var qrGenerator = new QRCodeGenerator();
+                using var qrCodeData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.Q);
+                using var qrCode = new PngByteQRCode(qrCodeData);
+                var qrCodeImage = qrCode.GetGraphic(20);
+
+                // Convert to Base64 string for embedding in HTML
+                return Convert.ToBase64String(qrCodeImage);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating QR code for reservation {ReservationId}", reservationId);
+                return string.Empty;
+            }
+        }
+
+        public string GenerateTicketCode(int reservationId, DateTime createdAt)
+        {
+            // Generate a unique, verifiable ticket code
+            var input = $"{reservationId}-{createdAt:yyyyMMddHHmmss}";
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            
+            // Take first 8 bytes and convert to alphanumeric code
+            var code = Convert.ToBase64String(hashBytes.Take(8).ToArray())
+                .Replace("+", "")
+                .Replace("/", "")
+                .Replace("=", "")
+                .ToUpper();
+            
+            return $"TKT-{code}";
         }
     }
 }

@@ -42,9 +42,18 @@
                                     <p><span class="badge bg-warning">Oczekuje na potwierdzenie</span></p>
                                 </div>
                             </div>
-                            <p class="mb-0 small text-muted">
+                            <p class="mb-3 small text-muted">
                                 Rezerwacja będzie aktywna po potwierdzeniu przez administratora zasobu.
                             </p>
+                            @if (reservationId.HasValue)
+                            {
+                                <div class="d-grid">
+                                    <a href="@Url.Action("Ticket", "Reservation", new { id = reservationId })" 
+                                       class="btn btn-primary">
+                                        <i class="fas fa-ticket-alt me-2"></i>Zobacz bilet z kodem QR
+                                    </a>
+                                </div>
+                            }
                         </div>
                     </div>
 

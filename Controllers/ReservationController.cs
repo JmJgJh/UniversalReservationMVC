@@ -13,17 +13,20 @@ namespace UniversalReservationMVC.Controllers
         private readonly IReservationService _reservationService;
         private readonly IEventService _eventService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ITicketService _ticketService;
         private readonly ILogger<ReservationController> _logger;
 
         public ReservationController(
             IReservationService reservationService,
             IEventService eventService,
             IUnitOfWork unitOfWork,
+            ITicketService ticketService,
             ILogger<ReservationController> logger)
         {
             _reservationService = reservationService;
             _eventService = eventService;
             _unitOfWork = unitOfWork;
+            _ticketService = ticketService;
             _logger = logger;
         }
 
@@ -162,6 +165,7 @@ namespace UniversalReservationMVC.Controllers
                 await _reservationService.CreateReservationAsync(reservation);
                 _logger.LogInformation("User {UserId} created reservation {ReservationId}", userId, reservation.Id);
                 TempData["SuccessMessage"] = "Rezerwacja została utworzona pomyślnie.";
+                TempData["NewReservationId"] = reservation.Id;
                 
                 // Jeśli podany returnUrl, przejdź tam, inaczej na MyReservations
                 if (!string.IsNullOrEmpty(vm.ReturnUrl) && IsValidReturnUrl(vm.ReturnUrl))
@@ -446,5 +450,41 @@ namespace UniversalReservationMVC.Controllers
             return uri.Scheme == Uri.UriSchemeHttps || 
                    uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
                    uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase);
-        }    }
+        }
+        
+        /// <summary>
+        /// Wyświetla bilet/potwierdzenie rezerwacji z kodem QR
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Ticket(int id)
+        {
+            var reservation = await _reservationService.GetReservationByIdAsync(id);
+            if (reservation == null) 
+                return NotFound();
+
+            var userId = User.GetCurrentUserId();
+            
+            // Allow access for owner, guest with email match, or admin
+            if (!string.IsNullOrEmpty(reservation.UserId) && reservation.UserId != userId && !User.IsAdmin())
+            {
+                return Forbid();
+            }
+
+            var resource = await _unitOfWork.Resources.GetByIdAsync(reservation.ResourceId);
+            var seat = reservation.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(reservation.SeatId.Value) : null;
+            var ticketEvent = reservation.EventId.HasValue ? await _eventService.GetEventByIdAsync(reservation.EventId.Value) : null;
+
+            // Generate QR code
+            var qrCodeBase64 = _ticketService.GenerateQrCodeForReservation(reservation.Id);
+            var ticketCode = _ticketService.GenerateTicketCode(reservation.Id, reservation.CreatedAt);
+
+            ViewBag.QrCodeBase64 = qrCodeBase64;
+            ViewBag.TicketCode = ticketCode;
+            ViewBag.ResourceName = resource?.Name;
+            ViewBag.SeatLabel = seat != null ? $"Rząd {seat.X}, Miejsce {seat.Y}" : "Bez przypisanego miejsca";
+            ViewBag.EventTitle = ticketEvent?.Title;
+            
+            return View(reservation);
+        }
+    }
 }
