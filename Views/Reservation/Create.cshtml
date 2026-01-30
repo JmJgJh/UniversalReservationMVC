@@ -66,16 +66,16 @@
                         }
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Data i godzina rozpoczęcia</label>
-                                <input type="datetime-local" class="form-control" name="StartTime" id="StartTime"
-                                       value="@Model.StartTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                                <label asp-for="StartTime" class="form-label">Data i godzina rozpoczęcia</label>
+                                <input asp-for="StartTime" type="datetime-local" class="form-control" 
+                                       asp-format="{0:yyyy-MM-ddTHH:mm}" required />
                                 <span class="text-danger" asp-validation-for="StartTime"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Data i godzina zakończenia</label>
-                                <input type="datetime-local" class="form-control" name="EndTime" id="EndTime"
-                                       value="@Model.EndTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                                <label asp-for="EndTime" class="form-label">Data i godzina zakończenia</label>
+                                <input asp-for="EndTime" type="datetime-local" class="form-control" 
+                                       asp-format="{0:yyyy-MM-ddTHH:mm}" required />
                                 <span class="text-danger" asp-validation-for="EndTime"></span>
                             </div>
                         </div>
