@@ -28,6 +28,7 @@ System rezerwacji online dla różnych typów zasobów: restauracje, kina, teatr
 - ✅ Eksport raportów do Excel
 - ✅ Wielojęzyczność (PL/EN)
 - ✅ Tryb ciemny/jasny
+- ✅ Bilety z kodami QR do weryfikacji
 
 ## 🛠️ Wymagania
 
@@ -230,12 +231,15 @@ dotnet test
 - [x] Migracje EF Core w `/Migrations`
 - [x] Seeding danych testowych
 - [x] Testy jednostkowe (xUnit)
+- [x] Generowanie biletów z kodami QR (pakiet QRCoder)
+- [x] Unikalny kod biletu dla każdej rezerwacji
+- [x] Widok biletu z możliwością drukowania
 
 ### 📋 Planowane
 
 - [ ] Rozszerzony dashboard analytics (wykresy, statystyki czasowe)
 - [ ] System powiadomień push (PWA)
-- [ ] QR kody dla biletów
+- [ ] Weryfikacja biletów przez skanowanie kodów QR
 - [ ] Automatyczne przypomnienia o rezerwacjach
 - [ ] Obsługa anulowania rezerwacji z refundacją
 - [ ] Automatyczne archiwizowanie starych rezerwacji
