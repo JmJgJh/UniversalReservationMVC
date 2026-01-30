@@ -115,9 +115,11 @@ namespace UniversalReservationMVC.Controllers
             {
                 var resource = await _unitOfWork.Resources.GetByIdAsync(vm.ResourceId);
                 var seat = vm.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(vm.SeatId.Value) : null;
+                var seats = await _unitOfWork.Seats.GetByResourceIdAsync(vm.ResourceId);
                 ViewBag.ResourceName = resource?.Name ?? "Zasób";
                 ViewBag.SeatLabel = seat?.Label ?? "Nieznane";
                 ViewBag.ResourcePrice = resource?.Price ?? 0;
+                ViewBag.Seats = seats.ToList();
                 return View(vm);
             }
 
@@ -175,9 +177,11 @@ namespace UniversalReservationMVC.Controllers
                 ModelState.AddModelError(string.Empty, ex.Message);
                 var resource = await _unitOfWork.Resources.GetByIdAsync(vm.ResourceId);
                 var seat = vm.SeatId.HasValue ? await _unitOfWork.Seats.GetByIdAsync(vm.SeatId.Value) : null;
+                var seats = await _unitOfWork.Seats.GetByResourceIdAsync(vm.ResourceId);
                 ViewBag.ResourceName = resource?.Name ?? "Zasób";
                 ViewBag.SeatLabel = seat?.Label ?? "Nieznane";
                 ViewBag.ResourcePrice = resource?.Price ?? 0;
+                ViewBag.Seats = seats.ToList();
                 return View(vm);
             }
         }

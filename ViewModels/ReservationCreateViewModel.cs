@@ -13,10 +13,12 @@ namespace UniversalReservationMVC.ViewModels
 
         [Required(ErrorMessage = "Data rozpoczęcia jest wymagana")]
         [Display(Name = "Data rozpoczęcia")]
+        [DataType(DataType.DateTime)]
         public DateTime StartTime { get; set; }
 
         [Required(ErrorMessage = "Data zakończenia jest wymagana")]
         [Display(Name = "Data zakończenia")]
+        [DataType(DataType.DateTime)]
         public DateTime EndTime { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
